@@ -13,7 +13,7 @@ async function setup(t) {
   const ctx = {
     accessControl: createAccessControl({ BRIDGE_AUTH_TOKEN: token }),
     state: { clients: new Set(), flags: { ready: false } },
-    SCHEMA_VERSION: 1,
+    SCHEMA_VERSION: 2,
     bridgeId: "fixture-bridge",
     authStatus: () => ({ state: "pending" }),
   };
@@ -64,7 +64,7 @@ test("WebSocket handshake admits a valid bearer and retains hello shape", async 
   const message = await firstMessage(url, { Authorization: "Bearer " + token });
   assert.deepEqual(message, {
     event: "hello",
-    schemaVersion: 1,
+    schemaVersion: 2,
     bridgeId: "fixture-bridge",
     auth: { state: "pending" },
   });
