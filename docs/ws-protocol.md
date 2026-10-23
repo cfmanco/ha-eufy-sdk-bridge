@@ -453,12 +453,12 @@ Fired when a camera's live P2P feed opens (`active: true`) or is torn down / idl
 
 ## Sibling HTTP endpoints
 
-| method + path        | returns                                                                                                     |
+| method + path        | returns                                                                                                   |
 | -------------------- | ----------------------------------------------------------------------------------------------------------- |
 | `GET /healthz`       | Anonymous: `{ ok: true }`; authenticated: diagnostic details including authentication and streaming state |
-| `GET /snapshot/<sn>` | a JPEG still (`image/jpeg`). _Requires auth._                                                               |
-| `GET /stream/<sn>`   | live Annex-B H.264/H.265 (`video/H264`) — what go2rtc pulls. _Requires auth._                               |
-| `GET /clip/<sn>`     | the latest detection's HomeBase 2 recording (`video/mp4`). _Requires auth._                                 |
+| `GET /snapshot/<sn>` | a JPEG still (`image/jpeg`). _Requires auth._                                                             |
+| `GET /stream/<sn>`   | live Annex-B H.264/H.265 (`video/H264`) — what go2rtc pulls. _Requires auth._                             |
+| `GET /clip/<sn>`     | the latest detection's HomeBase 2 recording (`video/mp4`). _Requires auth._                               |
 
 The bridge does not infer cloud-poll health from device-event silence; `ok` means the HTTP endpoint answered.
 
