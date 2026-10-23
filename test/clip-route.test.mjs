@@ -28,6 +28,7 @@ function setup({ download = async () => ({ video: Buffer.from("V"), frames: 10 }
   const state = createState();
   state.flags.ready = true;
   const ctx = {
+    accessControl: { authorize: () => true },
     ...config,
     state,
     eventImageDir: dir,
