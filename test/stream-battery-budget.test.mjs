@@ -19,6 +19,7 @@ function setup(env = {}) {
   state.flags.ready = true;
   const opened = [];
   const ctx = {
+    accessControl: { authorize: () => true },
     ...config,
     state,
     eventLog: () => {},
