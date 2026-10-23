@@ -16,6 +16,7 @@ import fs from "node:fs";
 import { loadConfig } from "./src/config.mjs";
 import { checkWebRtcLibrary } from "./src/webrtc-check.mjs";
 import { installConsoleRedaction } from "./src/redact.mjs";
+import { createAccessControl } from "./src/access-control.mjs";
 import { loadBridgeId } from "./src/bridge-id.mjs";
 import { createState } from "./src/state.mjs";
 import { createEufy } from "./src/client.mjs";
@@ -35,6 +36,8 @@ import { closeStreamClients } from "./streams.mjs";
 // Before anything logs: no echoed credential reaches the console (see redact.mjs).
 installConsoleRedaction();
 const config = loadConfig();
+// Fail closed before opening any listeners or logging into the Eufy account.
+const accessControl = createAccessControl();
 const { cfg, DEBUG, DEBUG_P2P, EVENT_LOG, eventImageDir } = config;
 
 // last-event thumbnails live in the (mounted) data dir alongside the session file.
@@ -54,7 +57,7 @@ if (!cfg.email || !cfg.password) {
 // ── assemble ctx ────────────────────────────────────────────────────────────────────────────────────
 const state = createState();
 const eufy = createEufy(config);
-const ctx = { ...config, eufy, state, bridgeId: loadBridgeId(cfg.bridgeIdFile) };
+const ctx = { ...config, eufy, state, accessControl, bridgeId: loadBridgeId(cfg.bridgeIdFile) };
 
 // Each factory reads its cross-module deps off ctx lazily, so this single merge is enough — nothing here
 // is called until login/handlers run, by which point ctx is complete.
