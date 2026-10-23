@@ -40,7 +40,25 @@ export function createWsServer(ctx, httpServer) {
   // so fetch it once and cache it (a client can force a refresh with `{ refresh: true }`).
   let effectsCache = null;
 
-  const wss = new WebSocketServer({ server: httpServer, path: "/ws" });
+  // Authenticate the HTTP upgrade BEFORE sending hello, 2FA state or any events.
+  // noServer avoids an implicit unguarded upgrade path in the ws library.
+  const wss = new WebSocketServer({ noServer: true });
+  httpServer.on("upgrade", (req, socket, head) => {
+    const reject = (status, reason, authenticate = false) => {
+      const headers = [
+        "HTTP/1.1 " + status + " " + reason,
+        "Connection: close",
+        "Content-Length: 0",
+        ...(authenticate ? ['WWW-Authenticate: Bearer realm="eufy-bridge"'] : []),
+        "",
+        "",
+      ];
+      socket.end(headers.join("\r\n"));
+    };
+    if (req.url !== "/ws") return reject(404, "Not Found");
+    if (!ctx.accessControl?.authorize(req)) return reject(401, "Unauthorized", true);
+    wss.handleUpgrade(req, socket, head, (ws) => wss.emit("connection", ws, req));
+  });
   wss.on("connection", (ws) => {
     clients.add(ws);
     // On connect, tell the client the schema AND the current auth state, so a frontend knows immediately
