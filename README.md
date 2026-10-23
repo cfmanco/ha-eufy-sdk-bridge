@@ -1,5 +1,18 @@
 # ha-eufy-sdk-bridge
 
+> **Security-development branch — not deployment-ready.** This fork now requires a 256-bit bridge-client
+> bearer token for WebSocket and HTTP media endpoints. The upstream Home Assistant integration does not
+> supply that token, so it cannot connect yet. go2rtc streaming is also disabled in the development
+> Compose configuration until cross-host video transport is authenticated and verified.
+> **Do not run the upstream quick-start command against this branch.**
+> See [security architecture](docs/security-architecture.md),
+> [implementation plan](docs/security-implementation-plan.md) and
+> [development deployment requirements](docs/security-deployment.md).
+>
+> This branch publishes no image or Home Assistant add-on. The existing public README below describes
+> upstream behaviour and is not a hardened deployment guide.
+
+
 [![CI](https://github.com/mega-yfue/ha-eufy-sdk-bridge/actions/workflows/ci.yml/badge.svg)](https://github.com/mega-yfue/ha-eufy-sdk-bridge/actions/workflows/ci.yml)
 [![node](https://img.shields.io/badge/node-%E2%89%A524-brightgreen?logo=nodedotjs&logoColor=white)](./package.json)
 [![license](https://img.shields.io/badge/license-Apache--2.0-blue)](./LICENSE)
