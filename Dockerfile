@@ -56,7 +56,10 @@ RUN chmod +x bin/start.sh && ln -sf /app/bin/start.sh /usr/local/bin/eufy-sdk-br
 
 ENV BRIDGE_APP_DIR=/app BRIDGE_PORT=3000 BRIDGE_HOST=0.0.0.0 \
     GO2RTC_CONFIG=/app/data/go2rtc.yaml EUFY_SESSION=/app/data/.eufy-session.json
-RUN mkdir -p /app/data
+RUN install -d -m 0700 -o node -g node /app/data
+# The Node base image provides an unprivileged node user (UID/GID 1000).
+# Mount /app/data with matching host ownership; do not start as root to repair it.
+USER node:node
 EXPOSE 3000 1984 8554 8555/udp
 
 CMD [ "eufy-sdk-bridge" ]
