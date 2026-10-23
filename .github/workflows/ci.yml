@@ -2,6 +2,8 @@
 name: CI
 
 on:
+  push:
+    branches: [dev/security-hardening]
   pull_request:
     branches: [main, dev]
 
