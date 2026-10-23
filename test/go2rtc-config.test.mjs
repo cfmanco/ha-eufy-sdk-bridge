@@ -19,7 +19,7 @@ async function generate() {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "go2rtc-"));
   const file = path.join(dir, "go2rtc.yaml");
   const sns = await writeGo2rtcConfig({ go2rtcConfig: file, selfHost: "127.0.0.1", port: 3000 }, cams);
-  return { yaml: fs.readFileSync(file, "utf8"), sns };
+  return { yaml: fs.readFileSync(file, "utf8"), mode: fs.statSync(file).mode & 0o777, sns };
 }
 
 test("every camera stream is generated with #async", async () => {
@@ -31,4 +31,12 @@ test("every camera stream is generated with #async", async () => {
 test("a device without a stream path is left out", async () => {
   const { yaml } = await generate();
   assert.ok(!yaml.includes("SENSOR1"), "non-camera devices must not become go2rtc streams");
+});
+
+test("generated media config is private and has no remotely exposed listeners", async () => {
+  const { yaml, mode } = await generate();
+  assert.equal(mode, 0o600);
+  assert.match(yaml, /api:\n  listen: "127\.0\.0\.1:1984"/);
+  assert.match(yaml, /rtsp:\n  listen: "127\.0\.0\.1:8554"/);
+  assert.match(yaml, /webrtc:\n  listen: ""/);
 });
