@@ -2,7 +2,7 @@
 // no process.exit) so it can be imported from tests; server.mjs owns the startup guards.
 import path from "node:path";
 
-export const SCHEMA_VERSION = 1; // bump on any breaking protocol change so an old frontend fails loudly
+export const SCHEMA_VERSION = 2; // bump on any breaking protocol change so an old frontend fails loudly
 
 const truthy = (v) => /^(1|true|yes|on)$/i.test(String(v ?? ""));
 /** A positive whole number from an env value, else undefined (so the caller's default applies). */
