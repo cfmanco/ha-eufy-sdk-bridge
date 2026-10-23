@@ -25,7 +25,7 @@ Because the Home Assistant client and bridge run on different hosts, a bearer to
 
 ## Development configuration (do not start until compatibility is complete)
 
-1. Copy `.env.example` to `.env`; set the Eufy account country and credentials, the private `BRIDGE_BIND_IP` and `BRIDGE_AUTH_TOKEN_HOST_FILE`. The file contains *paths* but not the bridge token.
+1. Copy `.env.example` to `.env`; set the Eufy account country and credentials, the `BRIDGE_AUTH_TOKEN_HOST_FILE`. The file contains *paths* but not the bridge token.
 2. Generate the token into a **private directory outside the repository**, using a local administrator session:
 
    ```sh
@@ -38,7 +38,7 @@ Because the Home Assistant client and bridge run on different hosts, a bearer to
 4. Validate the Compose model without printing interpolated secret values: `docker compose -f docker-compose.yml config --quiet`.
 5. **Do not start or expose the service yet.** Current go2rtc media transport cannot serve the separate Home Assistant appliance, and the installed HACS client cannot authenticate. Completing those integrations is an explicit release prerequisite.
 
-The development Compose service uses Docker bridge networking rather than `network_mode: host`. It publishes only TCP port 3000 on the explicitly selected host interface, with a read-only root filesystem, a writable private data mount, a bounded `/tmp` tmpfs, dropped capabilities and `no-new-privileges`. These configuration properties require runtime validation; file inspection alone is insufficient.
+The development Compose service uses Docker bridge networking rather than `network_mode: host`. It publishes only TCP port 3000 on host loopback (127.0.0.1), pending a separate authenticated and encrypted gateway, with a read-only root filesystem, a writable private data mount, a bounded `/tmp` tmpfs, dropped capabilities and `no-new-privileges`. These configuration properties require runtime validation; file inspection alone is insufficient.
 
 ## Acceptance checklist
 
