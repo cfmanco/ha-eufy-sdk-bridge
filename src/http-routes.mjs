@@ -10,9 +10,9 @@ import { onBatteryPower } from "./power.mjs";
 import { storedThumbnailSeenAt } from "./stored-thumbnail.mjs";
 import { redactSecrets } from "./redact.mjs";
 
-function json(res, code, body) {
+function json(res, code, body, extraHeaders = {}) {
   const s = redactSecrets(JSON.stringify(body));
-  res.writeHead(code, { "content-type": "application/json", "content-length": Buffer.byteLength(s) });
+  res.writeHead(code, { "content-type": "application/json", "content-length": Buffer.byteLength(s), ...extraHeaders });
   res.end(s);
 }
 
@@ -97,8 +97,22 @@ export function createHttpHandler(ctx) {
   }
 
   return async function handleHttp(req, res) {
-    const url = new URL(req.url, `http://${req.headers.host}`);
+    // Treat the request target as relative to a fixed base, never to the client-supplied Host header.
+    const url = new URL(req.url, "http://bridge.invalid");
     const [, kind, sn] = url.pathname.split("/");
+
+    // Refuse unauthorised media access before checking readiness, camera state or cached thumbnails.
+    // An anonymous liveness probe reveals nothing beyond the fact that the process is running.
+    const authorised = ctx.accessControl?.authorize(req) === true;
+    if (!authorised) {
+      if (url.pathname === "/healthz" && (req.method == null || req.method === "GET")) {
+        return json(res, 200, { ok: true });
+      }
+      return json(res, 401, { error: "unauthorized" }, { "www-authenticate": 'Bearer realm="eufy-bridge"' });
+    }
+    if (req.method != null && req.method !== "GET") {
+      return json(res, 405, { error: "method not allowed" }, { allow: "GET" });
+    }
 
     if (url.pathname === "/healthz") {
       return json(res, 200, {
