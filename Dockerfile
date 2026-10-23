@@ -60,6 +60,6 @@ RUN install -d -m 0700 -o node -g node /app/data
 # The Node base image provides an unprivileged node user (UID/GID 1000).
 # Mount /app/data with matching host ownership; do not start as root to repair it.
 USER node:node
-EXPOSE 3000 1984 8554 8555/udp
+EXPOSE 3000
 
 CMD [ "eufy-sdk-bridge" ]
