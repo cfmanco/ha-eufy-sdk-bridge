@@ -14,6 +14,7 @@ services:
     environment:
       BRIDGE_HOST: "0.0.0.0"
       BRIDGE_PORT: "3000"
+      GO2RTC_ENABLE: "0" # Stream export stays disabled until authenticated media path is implemented.
       BRIDGE_AUTH_TOKEN_FILE: /run/secrets/bridge-client-token
     volumes:
       # Pre-provision data/ as UID/GID 1000 with directory mode 0700.
