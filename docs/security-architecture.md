@@ -9,20 +9,20 @@ Harden the existing Eufy SDK bridge for a single doorbell account while preservi
 
 Threats: an untrusted LAN or cross-VLAN client reading camera media, issuing device commands, submitting 2FA/captcha, observing event metadata, or reaching go2rtc's management surface. Host-root and supply-chain compromises remain distinct risks.
 
-Deployment: Home Assistant runs on a separate physical Home Assistant Green appliance (Home Assistant OS). The bridge and bundled go2rtc run on the DietPi Linux server as a dedicated, unprivileged container, not within Home Assistant Green. The bridge's authenticated endpoint must be reachable over the local network from the Green appliance; it must not bind exclusively to 127.0.0.1. Permit only the Green host (or its VLAN) through host and router firewall rules. The bridge and media transport require TLS or another encrypted, authenticated channel between physical hosts.\n\nAssumptions: the Home Assistant integration is updated alongside the bridge; the existing upstream integration currently calls `aiohttp.ClientSession.ws_connect(url, heartbeat=30)` without credentials. Thus authentication cannot be enforced unilaterally without breaking integration. Both bridge and frontend need coordinated release/versioning.
+Deployment: Home Assistant runs on a separate Home Assistant appliance appliance (Home Assistant OS). The bridge and bundled go2rtc run on the Linux container host as a dedicated, unprivileged container, not within Home Assistant appliance. The bridge's authenticated endpoint must be reachable over the local network from the Green appliance; it must not bind exclusively to 127.0.0.1. Permit only the Green host (or its VLAN) through host and router firewall rules. The bridge and media transport require TLS or another encrypted, authenticated channel between physical hosts.\n\nAssumptions: the Home Assistant integration is updated alongside the bridge; the existing upstream integration currently calls `aiohttp.ClientSession.ws_connect(url, heartbeat=30)` without credentials. Thus authentication cannot be enforced unilaterally without breaking integration. Both bridge and frontend need coordinated release/versioning.
 
 ## 2. Trust boundaries and components
 
 ```mermaid
 flowchart LR
   E[Eufy cloud and P2P] <-->|TLS / Eufy SDK| B[Bridge process]
-  H[Home Assistant Green - HA OS / HACS] <-->|Encrypted authenticated LAN / VLAN| B
+  H[Home Assistant appliance - HA OS / HACS] <-->|Encrypted authenticated LAN / VLAN| B
   H <-->|Encrypted authenticated media requests| P[Bridge HTTP media proxy]
   P --> B
   G[go2rtc media converter] -->|loopback-only upstream| P
   H -->|Restricted streaming transport| G
   B -->|0600 files in private volume| S[(Session store)]
-  F[DietPi host firewall and router ACL] -.-> H
+  F[Linux host firewall and router ACL] -.-> H
   F -.-> B
   F -.-> G
 ```
@@ -162,4 +162,8 @@ sequenceDiagram
 
 ## 8. Security considerations
 
-Home Assistant Green and the DietPi bridge are on separate physical hosts: localhost binding cannot serve Green, and plaintext bearer tokens on the LAN are not acceptable. Terminate TLS on the DietPi host or use an encrypted authenticated network overlay with validated peer identity.\n\nBearer tokens protect access only over trustworthy channels. Cross-host cleartext HTTP/WS exposes bearer credentials to network observers: deploy behind TLS termination or over a private authenticated tunnel when traffic crosses host boundaries. Requests must avoid embedding secrets in URLs. The image's go2rtc binary and npm dependencies require provenance and advisory checks separately from endpoint hardening.
+Home Assistant appliance and the bridge host are on separate physical hosts: localhost binding cannot serve Green, and plaintext bearer tokens on the LAN are not acceptable. Terminate TLS on the Linux host or use an encrypted authenticated network overlay with validated peer identity.\n\nBearer tokens protect access only over trustworthy channels. Cross-host cleartext HTTP/WS exposes bearer credentials to network observers: deploy behind TLS termination or over a private authenticated tunnel when traffic crosses host boundaries. Requests must avoid embedding secrets in URLs. The image's go2rtc binary and npm dependencies require provenance and advisory checks separately from endpoint hardening.
+
+## Documentation disclosure boundary
+
+Public architecture and deployment material describes device **roles**, trust boundaries, protocols and supported CPU architectures (for example, ARM64 and AMD64). It must not identify actual appliance models, server hardware models, serial numbers, hostnames, internal IP addresses or other installation-specific identifiers. Detailed inventory belongs in private deployment records only.
