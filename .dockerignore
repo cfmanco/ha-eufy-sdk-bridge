@@ -1,0 +1,25 @@
+# Build context excludes runtime secrets, local data and development-only artefacts.
+.git/
+.github/
+node_modules/
+data/
+.env
+.env.*
+**/.env
+**/.env.*
+**/*.pem
+**/*.key
+**/*.p12
+**/*.pfx
+**/.eufy-session.json
+**/.eufy-fcm.json
+**/.solix-session.json
+README.md
+CONTRIBUTING.md
+LICENSE
+docs/
+test/
+scripts/
+.vscode/
+.idea/
+.DS_Store
