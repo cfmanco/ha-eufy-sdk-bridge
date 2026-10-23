@@ -1,11 +1,12 @@
-# PR gate for the bridge: every pull request into main or dev must lint, compile and test clean.
+# Verify both development pushes and pull requests before integration.
 name: CI
 
 on:
   push:
-    branches: [dev/security-hardening]
+    branches: [main, dev, "dev/**"]
   pull_request:
-    branches: [main, dev]
+    branches: [main, dev, "dev/**"]
+  workflow_dispatch:
 
 permissions:
   contents: read
