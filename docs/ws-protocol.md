@@ -4,9 +4,11 @@ The bridge exposes control, state, auth and events over one WebSocket, and video
 HTTP endpoints. This is the reference for what a frontend (the HACS integration, a web UI, anything)
 sends and receives.
 
-- **Endpoint:** `ws://<host>:3000/ws`
-- **Schema version:** `1` (sent in `hello`/`ready`; bumped on any breaking change so an old client fails loudly)
+- **Endpoint:** `/ws` on the bridge service. Prefer `wss://` via authenticated, certificate-validated cross-host transport.
+- **Schema version:** `2` (sent in `hello`/`ready`; bearer authentication is a breaking transport requirement)
 - **Encoding:** JSON text frames.
+
+**Security-development protocol:** All WebSocket upgrades require `Authorization: Bearer <64-character hex token>` before any `hello` or auth challenge is sent. HTTP media requests require the same header. An anonymous `GET /healthz` returns only `{ "ok": true }`. The existing upstream Home Assistant integration cannot supply these credentials; this branch is not deployment-ready. A separate encrypted and authenticated media path must be provided before RTSP/live video can work across hosts.
 
 ## Message shapes
 
@@ -46,7 +48,7 @@ Ask what the login needs right now.
 
 `bridgeId` is this bridge install's stable id (a UUID kept in the data dir beside the session file). It is
 the same whatever address the bridge is reached at, so a host can tell the same bridge added twice (e.g.
-discovered at `172.30.32.1` and added by LAN IP) from two bridges. `hello` and `/healthz` carry it too.
+discovered at `172.30.32.1` and added by LAN IP) from two bridges. `hello` carries it too. The detailed `/healthz` response requires an authorised bearer token.
 
 `auth` is one of:
 
@@ -453,7 +455,7 @@ Fired when a camera's live P2P feed opens (`active: true`) or is torn down / idl
 
 | method + path        | returns                                                                                                     |
 | -------------------- | ----------------------------------------------------------------------------------------------------------- |
-| `GET /healthz`       | `{ ok, schemaVersion, bridgeId, auth: { state }, streaming: [sn,…] }` — always available (even before auth) |
+| `GET /healthz`       | Anonymous: `{ ok: true }`; authenticated: diagnostic details including authentication and streaming state |
 | `GET /snapshot/<sn>` | a JPEG still (`image/jpeg`). _Requires auth._                                                               |
 | `GET /stream/<sn>`   | live Annex-B H.264/H.265 (`video/H264`) — what go2rtc pulls. _Requires auth._                               |
 | `GET /clip/<sn>`     | the latest detection's HomeBase 2 recording (`video/mp4`). _Requires auth._                                 |
