@@ -25,7 +25,7 @@ Because the Home Assistant client and bridge run on different hosts, a bearer to
 
 ## Development configuration (do not start until compatibility is complete)
 
-1. Copy `.env.example` to `.env`; set the Eufy account country and credentials, the `BRIDGE_AUTH_TOKEN_HOST_FILE`. The file contains *paths* but not the bridge token.
+1. Copy `.env.example` to `.env`; set the Eufy account country and credentials, the `BRIDGE_AUTH_TOKEN_HOST_FILE`. The file contains _paths_ but not the bridge token.
 2. Generate the token into a **private directory outside the repository**, using a local administrator session:
 
    ```sh
