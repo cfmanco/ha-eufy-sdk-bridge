@@ -19,6 +19,7 @@ function setup() {
   state.flags.ready = true;
   const dropped = [];
   const ctx = {
+    accessControl: { authorize: () => true },
     ...config,
     state,
     eventLog: () => {},
