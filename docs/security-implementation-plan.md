@@ -2,7 +2,7 @@
 
 Status: approved scope, design gate pending compatibility confirmation
 Branch: `dev/security-hardening`
-Deployment topology: Home Assistant Green (physical Home Assistant OS appliance, HACS integration) communicates across the LAN with an isolated Eufy bridge container on DietPi. Home Assistant itself is not containerised. Remote bridge reachability requires a restricted listener and encrypted authenticated transport, not localhost-only binding.\nCompanion repository: `mega-yfue/ha-eufy-sdk` (read-only reference; no modification authorised there)
+Deployment topology: Home Assistant appliance (Home Assistant OS appliance, HACS integration) communicates across the LAN with an isolated Eufy bridge container on Linux host. Home Assistant itself is not containerised. Remote bridge reachability requires a restricted listener and encrypted authenticated transport, not localhost-only binding.\nCompanion repository: `mega-yfue/ha-eufy-sdk` (read-only reference; no modification authorised there)
 
 ## Definition of done
 
@@ -16,7 +16,7 @@ Files: `src/ws-server.mjs`, `src/http-routes.mjs`, `src/config.mjs`, `go2rtc-con
 * Trace all Home Assistant references to WS URL, HTTP paths, RTSP URLs and WebRTC player URLs.
 * Determine whether the actual Home Assistant instance uses the addon/integration or custom media relay. Choose a compatible companion frontend change and deployment procedure.
 * Inspect go2rtc support for authenticated RTSP/WebRTC, HTTP API listener binding, and dynamic stream credentials. Reject any method that puts long-lived tokens in generated stream URLs.
-* Inspect DietPi host-mapped volume ownership and ARM64 target. Determine the Home Assistant Green address and the permitted inter-VLAN flow; do not assume HA and bridge share localhost.\n* Verify the end-to-end encrypted transport between Green and DietPi, including certificate hostname validation and streaming protocol support.
+* Inspect Linux host-mapped volume ownership and ARM64 target. Determine the Home Assistant appliance address and the permitted inter-VLAN flow; do not assume HA and bridge share localhost.\n* Verify the end-to-end encrypted transport between Green and Linux host, including certificate hostname validation and streaming protocol support.
 * Dependency graph: Stage 0 precedes all security protocol modifications.
 
 ## Stage 1 — control-plane authentication
@@ -61,7 +61,7 @@ Pseudocode:
 
 ```text
 when generating go2rtc config:
-  bind go2rtc management API to container loopback only; bridge client endpoint must remain reachable from HA Green over restricted encrypted LAN transport
+  bind go2rtc management API to container loopback only; bridge client endpoint must remain reachable from Home Assistant appliance over restricted encrypted LAN transport
   disable protocols not needed by verified HA media path
   use authenticated internal stream source (not a URL query parameter)
   prohibit accidental unrestricted RTSP/WebRTC listeners
@@ -105,7 +105,7 @@ Do not claim a Docker `EXPOSE` line blocks access; actual listeners and publishe
 
 ## Stage 4 — companion frontend and release migration
 
-HA Green runs the companion HACS integration as part of Home Assistant OS. There is no requirement to put Home Assistant in Docker or install the bridge as a Green add-on. The upstream HA client's `api.py` currently does `ws_connect(self._url, heartbeat=30)` without auth headers; therefore a bridge-only change **cannot** satisfy functionality and authentication simultaneously. Create a compatible branch or patch for the HA integration after repository ownership/target is selected; add a protected token field in the HA config/options flow, include it in WS headers and HTTP image calls, and handle renew/reconnect without logs. Test migration of existing config entries. Do not commit to an unowned upstream repository.
+Home Assistant appliance runs the companion HACS integration as part of Home Assistant OS. There is no requirement to put Home Assistant in Docker or install the bridge as a Green add-on. The upstream HA client's `api.py` currently does `ws_connect(self._url, heartbeat=30)` without auth headers; therefore a bridge-only change **cannot** satisfy functionality and authentication simultaneously. Create a compatible branch or patch for the HA integration after repository ownership/target is selected; add a protected token field in the HA config/options flow, include it in WS headers and HTTP image calls, and handle renew/reconnect without logs. Test migration of existing config entries. Do not commit to an unowned upstream repository.
 
 Pseudocode:
 
@@ -127,7 +127,7 @@ If Home Assistant media consumers cannot transmit a bearer header, use short-liv
 
 ## Stage 5 — verification and delivery gate
 
-Commands: `npm ci`, `npm test`, `npm run lint`, `node --check server.mjs`, Docker build and container-level startup test on ARM64 or x86_64. Inspect listeners with `ss -ltnup`; verify access from physical Home Assistant Green over encrypted transport and and disallowed VLAN; verify session renewal and stream teardown; check current npm advisories and image provenance.
+Commands: `npm ci`, `npm test`, `npm run lint`, `node --check server.mjs`, Docker build and container-level startup test on ARM64 or x86_64. Inspect listeners with `ss -ltnup`; verify access from Home Assistant appliance over encrypted transport and and disallowed VLAN; verify session renewal and stream teardown; check current npm advisories and image provenance.
 
 Required report: git revision, file diff, tests pass/fail, unresolved integration dependencies, security checks, rollback procedure. Any failure keeps the branch labelled **not ready for deployment**. No merge to main or production deployment is part of this plan.
 
@@ -138,3 +138,7 @@ Keep functions small and pure where possible; explicit result/error types; no im
 ## Open compatibility gate
 
 Choose the companion Home Assistant integration target (the user's fork if available, otherwise a proposed patch). Its code changes must accompany enforcement or users cannot connect. The current plan is committed independently of code changes so this risk is visible and reviewable.
+
+## Documentation disclosure boundary
+
+Public architecture and deployment material describes device **roles**, trust boundaries, protocols and supported CPU architectures (for example, ARM64 and AMD64). It must not identify actual appliance models, server hardware models, serial numbers, hostnames, internal IP addresses or other installation-specific identifiers. Detailed inventory belongs in private deployment records only.
