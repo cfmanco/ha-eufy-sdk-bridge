@@ -41,6 +41,7 @@ function setup({ live, stored, env = {}, persist = true, battery = true, ready =
   const state = createState();
   state.flags.ready = ready;
   const ctx = {
+    accessControl: { authorize: () => true },
     ...config,
     state,
     eventImageDir: dir,
