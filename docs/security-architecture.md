@@ -106,28 +106,37 @@ Auth is bridge-client authentication, distinct from the bridge's own Eufy login.
 
 ## 5. HTTP/media interaction
 
+The following sequence specifies the intended access control behaviour. It is not yet implemented.
+
 ```mermaid
 sequenceDiagram
   participant HA as Home Assistant
   participant API as Bridge media handler
   participant SDK as Eufy camera SDK
   participant RTC as go2rtc
-  HA->>API: GET snapshot with bearer header
-  API->>API: Authorise BEFORE camera/cache access
-  alt Not authorised
-    API-->>HA: 401; no image or state
-  else Authorised
-    API->>SDK: Read retained thumbnail or live snapshot
-    SDK-->>API: JPEG
-    API-->>HA: JPEG
+
+  HA->>API: Request snapshot with bearer credential
+  API->>API: Verify client authorisation
+  alt Client not authorised
+    API-->>HA: HTTP 401 Unauthorized
+  else Client authorised
+    API->>SDK: Fetch snapshot
+    SDK-->>API: JPEG image
+    API-->>HA: JPEG image
   end
-  RTC->>API: GET stream with scoped internal credential
-  API->>API: Validate internal credential
-  API->>SDK: Open P2P readable stream
-  SDK-->>RTC: Camera frames via API
+
+  RTC->>API: Request video with scoped internal credential
+  API->>API: Verify internal stream authorisation
+  alt Internal credential rejected
+    API-->>RTC: HTTP 401 Unauthorized
+  else Internal credential accepted
+    API->>SDK: Open P2P camera feed
+    SDK-->>API: Video frames
+    API-->>RTC: Relay video frames
+  end
 ```
 
-The internal go2rtc-to-bridge credential should not be the same as the Home Assistant control token. A camera request must never start P2P before authorisation. Keep `/healthz` minimal (liveness only) or authenticated; do not reveal device serials, Eufy auth state or streaming metadata anonymously.
+The internal go2rtc-to-bridge credential must be distinct from the Home Assistant control token. Authorisation must precede camera and cache access, and denied requests must never initiate P2P streaming. A protected upstream connection does not itself protect go2rtc's downstream listeners; client-facing streaming must separately enforce authentication or be reachable only through an authenticated media gateway. Keep `/healthz` minimal or authenticated and avoid disclosing serials or authentication state anonymously.
 
 ## 6. Event and reauthentication interaction
 
