@@ -11,7 +11,7 @@ Protect every WS message/event and media endpoint; run bridge as non-root; minim
 
 ## Stage 0 — verify contract and baseline
 
-Progress: the upstream client contract and bridge entry points have been inspected; complete baseline tests are blocked because the execution host cannot resolve GitHub/npm. The branch has no GitHub Actions runs at the time of inspection.
+Progress: the upstream client contract and bridge entry points were inspected. GitHub Actions run #40003858594 completed successfully with dependency installation, Prettier, JavaScript syntax checks and 182 unit tests passing (zero failures). The local execution host cannot reach GitHub directly; the GitHub Actions run is the source of verification evidence.
 
 Files: `src/ws-server.mjs`, `src/http-routes.mjs`, `src/config.mjs`, `go2rtc-config.mjs`, `src/boot.mjs`, `Dockerfile`, `docker-compose.yml`, `docs/ws-protocol.md`, `test/*.test.mjs`.
 
@@ -136,6 +136,8 @@ configure HA:
 If Home Assistant media consumers cannot transmit a bearer header, use short-lived one-time media grants bound to stream/session or an authenticated local proxy. Validate this separately; do not expose a permanent bearer token in URL path/query.
 
 ## Stage 5 — verification and delivery gate
+
+Continuous integration now runs on the security development branch. A production dependency audit was added after the successful test run. The npm installation reported one moderate-severity advisory; identify and assess it before production release. A green test run does not establish runtime or deployment security.
 
 Commands: `npm ci`, `npm test`, `npm run lint`, `node --check server.mjs`, Docker build and container-level startup test on ARM64 or x86_64. Inspect listeners with `ss -ltnup`; verify access from Home Assistant appliance over encrypted transport and rejected traffic from disallowed VLANs; verify session renewal and stream teardown; check current npm advisories and image provenance.
 
