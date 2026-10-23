@@ -45,6 +45,6 @@ ENV BRIDGE_APP_DIR=/app BRIDGE_PORT=3000 BRIDGE_HOST=0.0.0.0 \
     GO2RTC_CONFIG=/app/data/go2rtc.yaml EUFY_SESSION=/app/data/.eufy-session.json
 RUN install -d -m 0700 -o node -g node /app/data
 USER node:node
-EXPOSE 3000 1984 8554 8555/udp
+EXPOSE 3000
 
 CMD [ "eufy-sdk-bridge" ]
