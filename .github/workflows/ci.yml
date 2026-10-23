@@ -29,6 +29,12 @@ jobs:
         run: npm run lint
       # compile: the bridge is ESM (no tsc), so syntax-check every module — catches parse/typo errors
       # a plain `require` at runtime would only hit lazily.
+      # Temporary diagnostic to collect the precise Prettier patch from the CI runner.
+      - name: Display required formatting diff
+        if: failure()
+        run: |
+          npx prettier --write README.md docs/ws-protocol.md docs/security-implementation-plan.md docs/security-deployment.md
+          git --no-pager diff -- README.md docs/ws-protocol.md docs/security-implementation-plan.md docs/security-deployment.md
       - name: Compile (ESM syntax-check)
         run: |
           set -e
