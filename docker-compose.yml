@@ -6,9 +6,9 @@ services:
       context: .
     image: ha-eufy-sdk-bridge:security-dev
     restart: unless-stopped
-    # The bridge is separate from Home Assistant. Bind only the intended host interface.
+    # Deliberately loopback-only until an authenticated TLS/overlay endpoint is installed.
     ports:
-      - "${BRIDGE_BIND_IP:?Set BRIDGE_BIND_IP to a private host interface}:3000:3000/tcp"
+      - "127.0.0.1:3000:3000/tcp"
     env_file:
       - .env
     environment:
