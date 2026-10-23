@@ -454,7 +454,7 @@ Fired when a camera's live P2P feed opens (`active: true`) or is torn down / idl
 ## Sibling HTTP endpoints
 
 | method + path        | returns                                                                                                   |
-| -------------------- | ----------------------------------------------------------------------------------------------------------- |
+| -------------------- | --------------------------------------------------------------------------------------------------------- |
 | `GET /healthz`       | Anonymous: `{ ok: true }`; authenticated: diagnostic details including authentication and streaming state |
 | `GET /snapshot/<sn>` | a JPEG still (`image/jpeg`). _Requires auth._                                                             |
 | `GET /stream/<sn>`   | live Annex-B H.264/H.265 (`video/H264`) — what go2rtc pulls. _Requires auth._                             |
