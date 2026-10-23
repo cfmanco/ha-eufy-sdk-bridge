@@ -9,20 +9,20 @@ Harden the existing Eufy SDK bridge for a single doorbell account while preservi
 
 Threats: an untrusted LAN or cross-VLAN client reading camera media, issuing device commands, submitting 2FA/captcha, observing event metadata, or reaching go2rtc's management surface. Host-root and supply-chain compromises remain distinct risks.
 
-Assumptions: the Home Assistant integration is updated alongside the bridge; the existing upstream integration currently calls `aiohttp.ClientSession.ws_connect(url, heartbeat=30)` without credentials. Thus authentication cannot be enforced unilaterally without breaking integration. Both bridge and frontend need coordinated release/versioning.
+Deployment: Home Assistant runs on a separate physical Home Assistant Green appliance (Home Assistant OS). The bridge and bundled go2rtc run on the DietPi Linux server as a dedicated, unprivileged container, not within Home Assistant Green. The bridge's authenticated endpoint must be reachable over the local network from the Green appliance; it must not bind exclusively to 127.0.0.1. Permit only the Green host (or its VLAN) through host and router firewall rules. The bridge and media transport require TLS or another encrypted, authenticated channel between physical hosts.\n\nAssumptions: the Home Assistant integration is updated alongside the bridge; the existing upstream integration currently calls `aiohttp.ClientSession.ws_connect(url, heartbeat=30)` without credentials. Thus authentication cannot be enforced unilaterally without breaking integration. Both bridge and frontend need coordinated release/versioning.
 
 ## 2. Trust boundaries and components
 
 ```mermaid
 flowchart LR
   E[Eufy cloud and P2P] <-->|TLS / Eufy SDK| B[Bridge process]
-  H[Home Assistant integration] <-->|Authenticated WS control and events| B
-  H <-->|Authenticated snapshots, clips and video| P[Bridge HTTP media proxy]
+  H[Home Assistant Green - HA OS / HACS] <-->|Encrypted authenticated LAN / VLAN| B
+  H <-->|Encrypted authenticated media requests| P[Bridge HTTP media proxy]
   P --> B
   G[go2rtc media converter] -->|loopback-only upstream| P
   H -->|Restricted streaming transport| G
   B -->|0600 files in private volume| S[(Session store)]
-  F[Host firewall / container network] -.-> H
+  F[DietPi host firewall and router ACL] -.-> H
   F -.-> B
   F -.-> G
 ```
@@ -88,7 +88,7 @@ sequenceDiagram
   participant HA as Home Assistant
   participant WS as Bridge WS upgrade
   participant SDK as Eufy SDK
-  HA->>WS: GET /ws + Authorization: Bearer <secret>
+  HA->>WS: GET /ws with Authorization bearer header
   WS->>WS: Verify exact token with constant-time comparison
   alt Invalid or absent token
     WS-->>HA: HTTP 401 before WebSocket upgrade
@@ -112,7 +112,7 @@ sequenceDiagram
   participant API as Bridge media handler
   participant SDK as Eufy camera SDK
   participant RTC as go2rtc
-  HA->>API: GET /snapshot/<serial> + bearer token
+  HA->>API: GET snapshot with bearer header
   API->>API: Authorise BEFORE camera/cache access
   alt Not authorised
     API-->>HA: 401; no image or state
@@ -121,7 +121,7 @@ sequenceDiagram
     SDK-->>API: JPEG
     API-->>HA: JPEG
   end
-  RTC->>API: GET /stream/<serial> using scoped internal credential
+  RTC->>API: GET stream with scoped internal credential
   API->>API: Validate internal credential
   API->>SDK: Open P2P readable stream
   SDK-->>RTC: Camera frames via API
@@ -162,4 +162,4 @@ sequenceDiagram
 
 ## 8. Security considerations
 
-Bearer tokens protect access only over trustworthy channels. Cross-host cleartext HTTP/WS exposes bearer credentials to network observers: deploy behind TLS termination or over a private authenticated tunnel when traffic crosses host boundaries. Requests must avoid embedding secrets in URLs. The image's go2rtc binary and npm dependencies require provenance and advisory checks separately from endpoint hardening.
+Home Assistant Green and the DietPi bridge are on separate physical hosts: localhost binding cannot serve Green, and plaintext bearer tokens on the LAN are not acceptable. Terminate TLS on the DietPi host or use an encrypted authenticated network overlay with validated peer identity.\n\nBearer tokens protect access only over trustworthy channels. Cross-host cleartext HTTP/WS exposes bearer credentials to network observers: deploy behind TLS termination or over a private authenticated tunnel when traffic crosses host boundaries. Requests must avoid embedding secrets in URLs. The image's go2rtc binary and npm dependencies require provenance and advisory checks separately from endpoint hardening.
