@@ -44,7 +44,7 @@ function firstMessage(url, headers) {
     ws.once("error", reject);
     ws.once("message", (data) => {
       const result = JSON.parse(data.toString());
-      ws.close();
+      ws.terminate(); // End the upgraded test socket before the server teardown runs.
       resolve(result);
     });
   });
