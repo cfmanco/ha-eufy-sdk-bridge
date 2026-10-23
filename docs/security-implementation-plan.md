@@ -137,7 +137,7 @@ If Home Assistant media consumers cannot transmit a bearer header, use short-liv
 
 ## Stage 5 — verification and delivery gate
 
-Continuous integration now runs on the security development branch. A production dependency audit was added after the successful test run. The npm installation reported one moderate-severity advisory; identify and assess it before production release. A green test run does not establish runtime or deployment security.
+Continuous integration now runs on the security development branch. The production dependency audit identifies and rejects moderate-or-higher advisories. The transitive ip-address package was updated from 10.7.2 to 10.7.4 in the lockfile to address CVE-2026-111997; CI confirmed a reproducible install, zero npm audit vulnerabilities and 182 passing unit tests. A green test run does not establish runtime or deployment security.
 
 Commands: `npm ci`, `npm test`, `npm run lint`, `node --check server.mjs`, Docker build and container-level startup test on ARM64 or x86_64. Inspect listeners with `ss -ltnup`; verify access from Home Assistant appliance over encrypted transport and rejected traffic from disallowed VLANs; verify session renewal and stream teardown; check current npm advisories and image provenance.
 
