@@ -15,13 +15,13 @@ Progress: the upstream client contract and bridge entry points have been inspect
 
 Files: `src/ws-server.mjs`, `src/http-routes.mjs`, `src/config.mjs`, `go2rtc-config.mjs`, `src/boot.mjs`, `Dockerfile`, `docker-compose.yml`, `docs/ws-protocol.md`, `test/*.test.mjs`.
 
-* Capture `npm ci && npm test && npm run lint` baseline in an isolated checkout.
-* Trace all Home Assistant references to WS URL, HTTP paths, RTSP URLs and WebRTC player URLs.
-* Determine whether the actual Home Assistant instance uses the addon/integration or custom media relay. Choose a compatible companion frontend change and deployment procedure.
-* Inspect go2rtc support for authenticated RTSP/WebRTC, HTTP API listener binding, and dynamic stream credentials. Reject any method that puts long-lived tokens in generated stream URLs.
-* Inspect Linux host-mapped volume ownership and ARM64 target. Determine the Home Assistant appliance address and the permitted inter-VLAN flow; do not assume HA and bridge share localhost.
-* Verify the end-to-end encrypted transport between the Home Assistant appliance and Linux host, including certificate hostname validation and streaming protocol support.
-* Dependency graph: Stage 0 precedes all security protocol modifications.
+- Capture `npm ci && npm test && npm run lint` baseline in an isolated checkout.
+- Trace all Home Assistant references to WS URL, HTTP paths, RTSP URLs and WebRTC player URLs.
+- Determine whether the actual Home Assistant instance uses the addon/integration or custom media relay. Choose a compatible companion frontend change and deployment procedure.
+- Inspect go2rtc support for authenticated RTSP/WebRTC, HTTP API listener binding, and dynamic stream credentials. Reject any method that puts long-lived tokens in generated stream URLs.
+- Inspect Linux host-mapped volume ownership and ARM64 target. Determine the Home Assistant appliance address and the permitted inter-VLAN flow; do not assume HA and bridge share localhost.
+- Verify the end-to-end encrypted transport between the Home Assistant appliance and Linux host, including certificate hostname validation and streaming protocol support.
+- Dependency graph: Stage 0 precedes all security protocol modifications.
 
 ## Stage 1 — control-plane authentication
 
