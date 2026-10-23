@@ -112,7 +112,7 @@ function buildCtx() {
   const config = loadConfig({ EUFY_EMAIL: "x@y.z", EUFY_PASSWORD: "pw" });
   const state = createState();
   const eufy = fakeEufy();
-  const ctx = { ...config, eufy, state };
+  const ctx = { ...config, eufy, state, accessControl: { authorize: () => true } };
   Object.assign(
     ctx,
     createFaces(ctx),
