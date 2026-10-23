@@ -26,9 +26,9 @@ jobs:
         run: npm ci
       # lint: formatting is enforced, not debated.
       # Audit production dependencies independently of formatting and unit tests.
-      # High/critical issues are release blockers; moderate advisories remain visible.
+      # Block moderate, high and critical advisories in production dependencies.
       - name: Audit production dependencies
-        run: npm audit --omit=dev --audit-level=high
+        run: npm audit --omit=dev --audit-level=moderate
       - name: Lint (Prettier)
         run: npm run lint
       # compile: the bridge is ESM (no tsc), so syntax-check every module — catches parse/typo errors
