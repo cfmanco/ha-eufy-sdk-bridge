@@ -349,12 +349,13 @@ export function createHttpHandler(ctx) {
         // The battery budget only takes effect when this call opens the session, which it does: the stream
         // client is dedicated to /stream (stills go through the control client), so nothing opens it first.
         const budget = cfg.streamBatteryBudgetMs;
-        const feed = await cam.openReadable(budget ? { batteryBudgetMs: budget } : undefined); // Annex-B
+        const liveOptions = budget ? { batteryBudgetMs: budget } : undefined;
+        const feed = await cam.openReadable(liveOptions); // Annex-B
         // A second consumer on the SDK's shared source receives budget notices.
         // Keep extending only while the HTTP viewer remains attached; no arbitrary viewing limit.
         let stopBudget;
         try {
-          stopBudget = await keepLiveUntilDisconnect(cam, () => !gone && !res.destroyed);
+          stopBudget = await keepLiveUntilDisconnect(cam, () => !gone && !res.destroyed, liveOptions);
         } catch (e) {
           feed.destroy();
           throw e;
