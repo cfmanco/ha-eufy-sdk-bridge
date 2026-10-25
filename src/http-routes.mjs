@@ -313,6 +313,51 @@ export function createHttpHandler(ctx) {
       return res.end(clip.mp4);
     }
 
+    if (kind === "stream-av" && sn) {
+      noteStreamRequest(sn, req);
+      if (ctx.streamBackoffMs?.(sn) > 0) return json(res, 503, { error: "stream backing off" });
+      let gone = false;
+      const onGone = () => { gone = true; };
+      res.once("close", onGone);
+      let lease;
+      let recording;
+      try {
+        lease = openStreamClient(sn, cfg);
+        const client = await lease;
+        if (gone) return;
+        const device = await client.getDevice(sn);
+        const cam = device.camera?.();
+        if (!cam?.recordFragments) {
+          res.off("close", onGone);
+          return json(res, 404, { error: "muxed live media unavailable" });
+        }
+        const desc = device.describe?.();
+        const powered = onBatteryPower(desc?.model, desc?.capabilities) ? "battery" : "wired";
+        recording = cam.recordFragments({ fragmentSeconds: 1, powered });
+        recording.on("budget", (notice) => { if (!gone) notice.extend(); });
+        res.off("close", onGone);
+        if (gone) return;
+        res.writeHead(200, { "content-type": "video/mp4", "cache-control": "no-store" });
+        for await (const fragment of recording) {
+          if (gone || res.destroyed) break;
+          for (const data of [fragment.init, fragment.data]) {
+            if (data?.length && !res.write(data)) {
+              await new Promise((resolve) => res.once("drain", resolve));
+            }
+          }
+        }
+        if (!res.destroyed) res.end();
+      } catch (error) {
+        if (!res.headersSent) return json(res, 502, { error: String(error?.message ?? error) });
+        res.destroy();
+      } finally {
+        res.off("close", onGone);
+        recording?.stop();
+        if (gone && !res.destroyed) res.destroy();
+      }
+      return;
+    }
+
     if (kind === "stream" && sn) {
       noteStreamRequest(sn, req); // trace who is pulling this stream (incl. go2rtc's real consumers)
       if (cfg.streamIdleMs) lastPullAttempt.set(sn, Date.now()); // consumer is asking (watched vs. gone)
