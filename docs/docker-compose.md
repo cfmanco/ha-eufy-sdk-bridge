@@ -1,5 +1,11 @@
 # Running the bridge with Docker Compose
 
+> **Upstream deployment guide only.** The examples below include host networking and go2rtc
+> listeners and are **not** appropriate for the `dev/security-hardening` private pilot.
+> For that branch, use the [hardened deployment runbook](security-deployment.md), where Docker
+> publishes only host-loopback port 3000, Nginx provides restricted TLS access, a private bridge
+> bearer token is required, and live video remains disabled.
+
 The bridge is one container that logs into eufy **once** and exposes the SDK over a WebSocket (+ HTTP
 video) for the [`ha-eufy-sdk`](https://github.com/mega-yfue/ha-eufy-sdk) Home Assistant integration.
 The published image already bundles the SDK and go2rtc, so you don't build anything — you pull and run.
