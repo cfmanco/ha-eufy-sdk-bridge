@@ -19,5 +19,6 @@ test("invalid JSON, public IP and unsafe serials are rejected", () => {
     '{"STATION":"127.0.0.1"}',
     '{"STATION":"example.com"}',
     '{"STATION":"192.168.1.1:32100"}',
-  ]) assert.throws(() => parseLocalAddresses(value), /EUFY_LOCAL_ADDRESSES/);
+  ])
+    assert.throws(() => parseLocalAddresses(value), /EUFY_LOCAL_ADDRESSES/);
 });

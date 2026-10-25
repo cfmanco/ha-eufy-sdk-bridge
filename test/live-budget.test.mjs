@@ -7,7 +7,9 @@ test("extend while viewer is active, without an imposed time limit", async () =>
   const handle = new EventEmitter();
   let stops = 0;
   let extended = 0;
-  handle.stop = () => { stops++; };
+  handle.stop = () => {
+    stops++;
+  };
   let connected = true;
   const release = await keepLiveUntilDisconnect({ live: async () => handle }, () => connected);
   for (let n = 0; n < 4; n++) handle.emit("budget", { extend: () => extended++ });

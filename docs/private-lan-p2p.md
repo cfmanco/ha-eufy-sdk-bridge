@@ -8,7 +8,7 @@ through a cloud relay. That observation does not prove cloud-free startup.
 ## Choose an explicit LAN station address
 
 Set **EUFY_LOCAL_ADDRESSES** in the bridge's private environment file,
-using the *parent station/HomeBase serial* as key, rather than the camera
+using the _parent station/HomeBase serial_ as key, rather than the camera
 serial. For example, using wholly illustrative values:
 
 ```env
