@@ -6,6 +6,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { streamClientFor, dropStreamClient, isSupersededStreamClient } from "../streams.mjs";
 import { createLiveStillTap } from "./live-still.mjs";
+import { keepLiveUntilDisconnect } from "./live-budget.mjs";
 import { onBatteryPower } from "./power.mjs";
 import { storedThumbnailSeenAt } from "./stored-thumbnail.mjs";
 import { redactSecrets } from "./redact.mjs";
@@ -349,10 +350,20 @@ export function createHttpHandler(ctx) {
         // client is dedicated to /stream (stills go through the control client), so nothing opens it first.
         const budget = cfg.streamBatteryBudgetMs;
         const feed = await cam.openReadable(budget ? { batteryBudgetMs: budget } : undefined); // Annex-B
+        // A second consumer on the SDK's shared source receives budget notices.
+        // Keep extending only while the HTTP viewer remains attached; no arbitrary viewing limit.
+        let stopBudget;
+        try {
+          stopBudget = await keepLiveUntilDisconnect(cam, () => !gone && !res.destroyed);
+        } catch (e) {
+          feed.destroy();
+          throw e;
+        }
         res.off("close", onGone);
         ctx.noteStreamOpened?.(sn); // reachable again → clear any failure backoff
         if (gone) {
-          feed.destroy(); // detaches from the shared live source, so it can stop
+          stopBudget();
+          feed.destroy();
           return;
         }
         let feeds = openFeeds.get(sn);
@@ -379,6 +390,7 @@ export function createHttpHandler(ctx) {
           if (cleanedUp) return;
           cleanedUp = true;
           void still.flush();
+          stopBudget(); // drops the auxiliary budget-notice consumer
           feed.destroy();
           // pipe() ends the response only on a clean end. A feed that failed (P2P drop, warm-up timeout) or
           // closed early would leave ffmpeg on an open, silent socket until its own timeout — abort the
