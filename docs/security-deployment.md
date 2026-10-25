@@ -19,23 +19,23 @@ This document describes the security-hardening branch, not the upstream host-net
 2. Copy `.env.example` to a private `.env` and set `EUFY_EMAIL`, `EUFY_PASSWORD`, the correct `EUFY_COUNTRY` and `BRIDGE_AUTH_TOKEN_HOST_FILE`. Keep the Eufy session and generated configuration inside the private `/app/data` mount (for example, `EUFY_SESSION=/app/data/.eufy-session.json` and `GO2RTC_CONFIG=/app/data/go2rtc.yaml`). Never commit `.env` or the data directory.
 3. Generate one 256-bit bridge-client credential as exactly 64 lowercase hexadecimal characters plus an optional trailing newline. Put it in an owner-only regular file (not a symlink), outside the repository. For example:
 
-~~~sh
+```sh
 umask 077
 install -d -m 0700 /private/eufy-secrets
 openssl rand -hex 32 > /private/eufy-secrets/bridge-client-token
 chown 1000:1000 /private/eufy-secrets/bridge-client-token
 chmod 0600 /private/eufy-secrets/bridge-client-token
-~~~
+```
 
 4. Provision `./data` for UID/GID 1000 with directory mode 0700 and protect the session files. Do not recursively change or delete a pre-existing session during an upgrade.
 5. Confirm the hardened Compose model keeps `127.0.0.1:3000:3000/tcp`, `read_only: true`, `cap_drop: [ALL]`, `no-new-privileges`, a bounded `/tmp` tmpfs, private data/token mounts, and `GO2RTC_ENABLE=0`. The Compose environment overrides optional go2rtc defaults in `.env.example`.
 6. Validate without printing expanded credentials, build and start the selected service:
 
-~~~sh
+```sh
 docker compose -f docker-compose.yml config --quiet
 docker compose -f docker-compose.yml build ha-eufy-sdk-bridge
 docker compose -f docker-compose.yml up -d --no-build ha-eufy-sdk-bridge
-~~~
+```
 
 The bridge rejects missing, malformed or conflicting credential sources. A successful cloud authentication status **does not** prove that any shared devices are visible; verify device inventory separately.
 
@@ -45,7 +45,7 @@ Use an appropriately trusted certificate that covers the bridge DNS name. Termin
 
 Example Nginx configuration (replace all uppercase placeholders; do not publish their real values):
 
-~~~nginx
+```nginx
 server {
     listen BRIDGE_LAN_ADDRESS:443 ssl;
     server_name BRIDGE_DNS_NAME;
@@ -80,7 +80,7 @@ server {
         return 404;
     }
 }
-~~~
+```
 
 The example illustrates the required access and authentication boundaries; adapt it to the host's existing Nginx layout and validate inherited `allow`/`deny` directives. Keep the gateway restricted by LAN/router policy as well. Binding to a LAN IP is not a substitute for independently checking WAN reachability.
 
@@ -90,13 +90,13 @@ After creating a configuration backup, run `nginx -t` before `systemctl reload n
 
 A DNS-01 Cloudflare Certbot renewal timer was used in the pilot. Confirm `certbot.timer` is active and use a deploy hook that validates Nginx and reloads it **after successful renewal**, without exposing the DNS API credential:
 
-~~~sh
+```sh
 #!/bin/sh
 set -eu
 [ "${RENEWED_LINEAGE:-}" = "/etc/letsencrypt/live/BRIDGE_DNS_NAME" ] || exit 0
 /usr/sbin/nginx -t
 /usr/bin/systemctl reload nginx
-~~~
+```
 
 Store this executable in `/etc/letsencrypt/renewal-hooks/deploy/`. Verify with `certbot renew --cert-name BRIDGE_DNS_NAME --dry-run --run-deploy-hooks`. This checks staging renewal and hook execution; **it does not prove a future live renewal**. In the pilot, Certbot completed its dry run but emitted a Python Cloudflare dependency deprecation warning requiring a future compatibility review. Nginx's successful `-t` messages on stderr were reported as hook error output despite the successful renewal simulation.
 
@@ -110,23 +110,23 @@ Store this executable in `/etc/letsencrypt/renewal-hooks/deploy/`. Verify with `
 
 ## Operational verification record
 
-The following were **observed in the private pilot on 25 October 2026**, not inferred solely from repository code:
+The following checks were observed on the private pilot on 25 October 2026, not inferred from code:
 
-| Control or operation | Observation |
-| --- | --- |
-| Inventory and registration | Bridge device listing succeeded without device-description errors; Home Assistant registered the discovered devices and entities after integration reload. |
-| Doorbell push | A physical doorbell press produced `eufy_sdk_event` with `event: doorbellPress`. |
-| Ringing state | Doorbell Ringing binary sensor switched on and returned off after approximately 30 seconds. |
-| Still media | The Last Event image and camera still image were displayed in Home Assistant over the authenticated media path. |
-| Authenticated/unauthenticated access | Authenticated WSS and HTTPS succeeded. A missing bearer token was rejected with HTTP 401 on tested protected endpoints. |
-| Allowed subnet | Nginx validated and reloaded; `/healthz` returned HTTP 200 from the authorised network. |
-| Denied network | From a separate, unauthorised VLAN, `/healthz`, `/ws`, `/snapshot/test`, `/event-image/test` and `/clip/test` all returned HTTP 403. |
-| Reconnect | After the access restriction, Home Assistant established a fresh HTTPS/WebSocket TCP connection and remained discoverable in Home Assistant. |
-| Host and container lifecycle | Docker service enabled/active; bridge running as `node:node` with `restart: unless-stopped`; Compose validated without an error. |
-| Port isolation | Both Compose port inspection and the host listening socket showed `127.0.0.1:3000` only. |
-| Gateway and certificate | Nginx active; TLS 1.3 configured; Certbot staging renewal succeeded and the Nginx deployment hook executed. |
+- **Inventory and registration:** Device listing succeeded without description errors; Home Assistant registered the devices.
+- **Doorbell push:** A physical press generated `eufy_sdk_event` with `event: doorbellPress`.
+- **Ringing state:** The binary sensor changed to on and returned to off after approximately 30 seconds.
+- **Still images:** The Last Event and camera still images appeared in Home Assistant.
+- **Authentication:** Authenticated WSS and HTTPS worked; anonymous requests to tested protected routes received HTTP 401.
+- **Authorised subnet:** The Nginx configuration validated and reloaded; `/healthz` returned HTTP 200.
+- **Denied subnet:** `/healthz`, `/ws`, `/snapshot/test`, `/event-image/test` and `/clip/test` returned HTTP 403.
+- **Reconnect:** Home Assistant established a fresh HTTPS/WebSocket connection after the network policy was applied.
+- **Lifecycle:** Docker was enabled and active; the bridge ran as `node:node` with `restart: unless-stopped`.
+- **Port isolation:** Compose and the host socket showed only `127.0.0.1:3000` listening for the bridge.
+- **Certificate:** Certbot's staging renewal and the Nginx deployment hook executed successfully.
 
-A `403` from an unauthorised subnet verifies the Nginx network gate for that source; a `401` from an allowed source verifies the separate bridge credential gate. Do not conflate them. The above checks do not establish production security or all possible network paths.
+A 403 verifies the Nginx network restriction for the tested source; a 401 verifies bridge authentication.
+
+These results do not establish production security or all possible network paths.
 
 ## Outstanding acceptance work
 
