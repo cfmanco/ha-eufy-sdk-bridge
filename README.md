@@ -1,16 +1,16 @@
 # ha-eufy-sdk-bridge
 
-> **Security-development branch — not deployment-ready.** This fork now requires a 256-bit bridge-client
-> bearer token for WebSocket and HTTP media endpoints. The upstream Home Assistant integration does not
-> supply that token, so it cannot connect yet. go2rtc streaming is also disabled in the development
-> Compose configuration until cross-host video transport is authenticated and verified.
-> **Do not run the upstream quick-start command against this branch.**
-> See [security architecture](docs/security-architecture.md),
-> [implementation plan](docs/security-implementation-plan.md) and
-> [development deployment requirements](docs/security-deployment.md).
+> **Security-hardening branch — private pilot operational as of 25 October 2026, not production-approved.**
+> A matched [Home Assistant security-hardening client](https://github.com/cfmanco/ha-eufy-sdk/tree/dev/security-hardening)
+> now connects over authenticated WSS and retrieves still images over HTTPS through a restricted TLS
+> gateway. Doorbell events and entity updates were verified on a separate Home Assistant OS appliance.
+> **Live video remains intentionally disabled; formal security acceptance is outstanding.**
 >
-> This branch publishes no image or Home Assistant add-on. The existing public README below describes
-> upstream behaviour and is not a hardened deployment guide.
+> For the tested two-host setup, requirements, checks and remaining release gates, use the
+> [hardened deployment runbook](docs/security-deployment.md). The [architecture](docs/security-architecture.md)
+> and [implementation plan](docs/security-implementation-plan.md) remain design references.
+> **Do not run the upstream quick-start, host-networking or published-image instructions below on
+> this branch.** They describe upstream behaviour, not a hardened deployment.
 
 [![CI](https://github.com/mega-yfue/ha-eufy-sdk-bridge/actions/workflows/ci.yml/badge.svg)](https://github.com/mega-yfue/ha-eufy-sdk-bridge/actions/workflows/ci.yml)
 [![node](https://img.shields.io/badge/node-%E2%89%A524-brightgreen?logo=nodedotjs&logoColor=white)](./package.json)
