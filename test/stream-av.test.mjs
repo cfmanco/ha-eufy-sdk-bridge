@@ -132,6 +132,32 @@ test("fragmented MP4 passes init and media fragments and releases the recording"
   assert.equal(extended, 0, "a closed stream cannot extend the camera budget");
 });
 
+test("slow HTTP clients backpressure fragmented media until drain", async () => {
+  const producer = {
+    on() {
+      return this;
+    },
+    stop() {},
+    async *[Symbol.asyncIterator]() {
+      yield { init: Buffer.from("ftyp"), data: Buffer.from("moofmdat") };
+    },
+  };
+  const { handler } = setup({ recordFragments: () => producer });
+  const item = request(handler);
+  let writes = 0;
+  item.res.write = (chunk) => {
+    writes += 1;
+    item.res.chunks.push(Buffer.from(chunk));
+    return writes !== 1;
+  };
+  await new Promise((resolve) => setImmediate(resolve));
+  assert.equal(writes, 1, "media must pause when the socket asks for backpressure");
+  item.res.emit("drain");
+  await item.done;
+  assert.equal(writes, 2);
+  assert.equal(Buffer.concat(item.res.chunks).toString(), "ftypmoofmdat");
+});
+
 test("disconnect stops a fragment producer without waiting for another frame", async () => {
   let ready;
   let release;
