@@ -315,9 +315,13 @@ export function createHttpHandler(ctx) {
 
     if (kind === "stream-av" && sn) {
       noteStreamRequest(sn, req);
-      if (ctx.streamBackoffMs?.(sn) > 0) return json(res, 503, { error: "stream backing off" });
+      if (ctx.streamBackoffMs?.(sn) > 0) {
+        return json(res, 503, { error: "stream backing off" });
+      }
       let gone = false;
-      const onGone = () => { gone = true; };
+      const onGone = () => {
+        gone = true;
+      };
       res.once("close", onGone);
       let lease;
       let recording;
@@ -334,7 +338,9 @@ export function createHttpHandler(ctx) {
         const desc = device.describe?.();
         const powered = onBatteryPower(desc?.model, desc?.capabilities) ? "battery" : "wired";
         recording = cam.recordFragments({ fragmentSeconds: 1, powered });
-        recording.on("budget", (notice) => { if (!gone) notice.extend(); });
+        recording.on("budget", (notice) => {
+          if (!gone) notice.extend();
+        });
         res.off("close", onGone);
         if (gone) return;
         res.writeHead(200, { "content-type": "video/mp4", "cache-control": "no-store" });
@@ -348,7 +354,9 @@ export function createHttpHandler(ctx) {
         }
         if (!res.destroyed) res.end();
       } catch (error) {
-        if (!res.headersSent) return json(res, 502, { error: String(error?.message ?? error) });
+        if (!res.headersSent) {
+          return json(res, 502, { error: String(error?.message ?? error) });
+        }
         res.destroy();
       } finally {
         res.off("close", onGone);
