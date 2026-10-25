@@ -225,7 +225,7 @@ test("http: /healthz reports ok + auth + empty streaming", async () => {
   assert.equal(out.ok, true);
   assert.deepEqual(out.auth, { state: "pending" });
   assert.deepEqual(out.streaming, []);
-  assert.equal(out.streamIdleMs, 300000);
+  assert.equal(out.streamIdleMs, 0); // new default: operator controls how long a viewer remains live
   assert.equal("lastActivitySec" in out, false);
   assert.equal("stalled" in out, false);
   httpServer.close();
