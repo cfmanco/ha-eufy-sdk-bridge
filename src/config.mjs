@@ -1,6 +1,7 @@
 // Environment → the immutable config + constants the whole bridge reads. Side-effect free (no mkdir,
 // no process.exit) so it can be imported from tests; server.mjs owns the startup guards.
 import path from "node:path";
+import { parseLocalAddresses } from "./local-addresses.mjs";
 
 export const SCHEMA_VERSION = 2; // bump on any breaking protocol change so an old frontend fails loudly
 
@@ -75,6 +76,8 @@ export function loadConfig(env = process.env) {
     // phone app under some conditions) presents the same identity and the two displace each other's
     // session / split push delivery. Set a unique value per bridge when you run more than one on an account.
     openudid: env.BRIDGE_OPENUDID || undefined,
+    // Optional, per-station LAN P2P addresses; not an offline cloud replacement.
+    localAddresses: parseLocalAddresses(env.EUFY_LOCAL_ADDRESSES),
     go2rtcConfig: env.GO2RTC_CONFIG || "./go2rtc.yaml",
     // Toggle for the bundled go2rtc process. Useful when running go2rtc as a separate container/service
     // instead of the one bundled here. Default ON to match existing behavior; set GO2RTC_ENABLE=0 to skip
