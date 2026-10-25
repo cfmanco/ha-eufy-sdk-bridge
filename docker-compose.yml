@@ -1,5 +1,6 @@
-# Security-development deployment only. Do not deploy until the companion HA client
-# and encrypted cross-host media transport have passed integration testing.
+# Hardened private-pilot Compose configuration; not production-approved.
+# Requires the matching authenticated HA integration and a restricted TLS gateway.
+# Live video is intentionally disabled until secure cross-host transport is verified.
 services:
   ha-eufy-sdk-bridge:
     build:
