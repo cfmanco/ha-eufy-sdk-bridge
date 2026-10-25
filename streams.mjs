@@ -54,6 +54,7 @@ export function streamClientOptions(cfg) {
     countryCode: cfg.country,
     store: new FileSessionStore(cfg.session), // shared session file → hydrate, no fresh login
     openudid: cfg.openudid, // same identity as the control client (matches the shared session)
+    localAddresses: cfg.localAddresses, // same LAN station target as the primary control client
     autoRealtime: false, // NEVER start a second push channel — see above
   };
 }
