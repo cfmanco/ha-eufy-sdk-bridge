@@ -82,3 +82,18 @@ observations, then test local H.264, reconnection and doorbell notifications
 with WAN disabled using a removable firewall policy. Restore the original
 policy immediately if any required function fails. Full cloud independence
 is not yet implemented or verified.
+
+## HomeKit audio/video source
+
+The separate authenticated `/stream-av/<serial>` route uses the SDK's
+`recordFragments()` API to emit fragmented MP4 with video and an AAC audio
+track when the camera sends AAC. This route is for HomeKit's direct FFmpeg
+input; the existing `/stream/<serial>` raw H.264 route remains for go2rtc.
+Both routes require the existing bearer and HTTPS controls. Add a separate
+Nginx proxy location for `/stream-av/` with the same auth, HA-host allowlist,
+streaming timeout and disabled response buffering as `/stream/`.
+Do not expose either route to the public internet.
+
+G.711 source audio is not carried by the SDK MP4 muxer and is not implicitly
+converted to AAC. Confirm the particular camera's actual audio codec and
+Apple Home playback before asserting complete support.
