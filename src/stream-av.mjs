@@ -52,7 +52,9 @@ export async function serveMuxedStream({ req, res, serial, ctx, openStreamClient
 
     const description = device.describe?.();
     const powered =
-      description && !onBatteryPower(description.model, description.capabilities) ? "wired" : "battery";
+      description && !onBatteryPower(description.model, description.capabilities)
+        ? "wired"
+        : "battery";
     recording = camera.recordFragments({ fragmentSeconds: 1, powered });
     recording.on("budget", (notice) => {
       if (!gone) notice.extend();

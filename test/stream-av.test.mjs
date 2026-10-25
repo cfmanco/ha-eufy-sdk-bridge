@@ -59,10 +59,12 @@ function setup({ authorised = true, recordFragments, backoffMs = 0 } = {}) {
       sdkCalls += 1;
       return {
         getDevice: async () => ({
-          camera: () => ({ recordFragments: (opts) => {
-            opened.push(opts);
-            return recordFragments();
-          } }),
+          camera: () => ({
+            recordFragments: (opts) => {
+              opened.push(opts);
+              return recordFragments();
+            },
+          }),
           describe: () => ({ model: "UNKNOWN", capabilities: ["battery"] }),
         }),
       };
@@ -122,7 +124,11 @@ test("fragmented MP4 passes init and media fragments and releases the recording"
   assert.equal(opened[0].powered, "battery");
   assert.equal(opened[0].fragmentSeconds, 1);
   let extended = 0;
-  budgetCallback({ extend: () => { extended += 1; } });
+  budgetCallback({
+    extend: () => {
+      extended += 1;
+    },
+  });
   assert.equal(extended, 0, "a closed stream cannot extend the camera budget");
 });
 
@@ -130,10 +136,16 @@ test("disconnect stops a fragment producer without waiting for another frame", a
   let ready;
   let release;
   let stopped = 0;
-  const entered = new Promise((resolve) => { ready = resolve; });
-  const blocked = new Promise((resolve) => { release = resolve; });
+  const entered = new Promise((resolve) => {
+    ready = resolve;
+  });
+  const blocked = new Promise((resolve) => {
+    release = resolve;
+  });
   const producer = {
-    on() { return this; },
+    on() {
+      return this;
+    },
     stop() {
       stopped += 1;
       release();
