@@ -89,12 +89,12 @@ export function loadConfig(env = process.env) {
     pollMs: env.EUFY_POLL_MS ? Number(env.EUFY_POLL_MS) : undefined,
     // Auto-off a BATTERY camera's live stream after this many ms with no detection event. It bleeds power
     // while its P2P live session is up, and go2rtc holds /stream open as long as anything consumes it —
-    // so keep the feed only while detections are recent. Mains cameras are exempt. Default 5 min; 0 disables.
-    streamIdleMs: env.STREAM_IDLE_MS != null ? Number(env.STREAM_IDLE_MS) : 300_000,
+    // so keep the feed only while detections are recent. Mains cameras are exempt. Disabled by default; set an interval to opt in.
+    streamIdleMs: env.STREAM_IDLE_MS != null ? Number(env.STREAM_IDLE_MS) : 0,
     // Battery-saver: a BATTERY camera left with the device's native `rtspStream` publish ON encodes
     // continuously and drains, even when nobody consumes it. If a battery device has rtspStream=true and
-    // has been idle this long, turn rtspStream OFF on the device. Default 5 min; 0 disables.
-    rtspIdleOffMs: env.RTSP_IDLE_OFF_MS != null ? Number(env.RTSP_IDLE_OFF_MS) : 300_000,
+    // has been idle this long, turn rtspStream OFF on the device. Disabled by default (0); set an interval to opt in.
+    rtspIdleOffMs: env.RTSP_IDLE_OFF_MS != null ? Number(env.RTSP_IDLE_OFF_MS) : 0,
     // Battery-saver: when a /stream open FAILS (P2P connect timeout, no p2p_did, connection closed), go2rtc's
     // ffmpeg source keeps retrying into /stream every ~30s — and each retry opens a fresh P2P session,
     // waking the camera radio for nothing on a camera that can't connect. After a failure, refuse reopening
