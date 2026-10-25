@@ -3,7 +3,7 @@ name: CI
 
 on:
   push:
-    branches: [main, dev, "dev/**"]
+    branches: [main, dev, "dev/**", "feat/local-p2p-live-view"]
   pull_request:
     branches: [main, dev, "dev/**"]
   workflow_dispatch:
