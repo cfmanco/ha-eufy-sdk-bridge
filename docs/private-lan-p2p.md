@@ -1,7 +1,8 @@
 # Private LAN P2P and live-video bridge
 
-The existing SDK /stream/<camera-serial> route serves authenticated H.264
-Annex-B. A successful local packet capture demonstrated a direct UDP media
+The SDK /stream/<camera-serial> route serves authenticated H.264
+Annex-B; /stream-av/<camera-serial> serves authenticated fragmented MP4
+with the audio track when the source codec can be muxed. A successful local packet capture demonstrated a direct UDP media
 path between a HomeBase and the bridge host, without video being carried
 through a cloud relay. That observation does not prove cloud-free startup.
 
@@ -25,18 +26,18 @@ or credentials into Git.
 ## Media delivery
 
 Do not expose the Node bridge port or unauthenticated RTSP/WebRTC to the LAN.
-The existing Node HTTP route still requires the 32-byte bearer on every
+Both Node media routes require the 32-byte bearer on every
 request. The Home Assistant integration's opt-in media proxy sends that
 bearer in the Authorization header through HTTPS (with certificate
-verification) and relays video only to its own 127.0.0.1 listener, for
-Home Assistant-managed go2rtc.
+verification) and exposes only an ephemeral local listener: raw H.264 to
+managed go2rtc, and fragmented MP4 to HomeKit's FFmpeg process.
 
 On the Pi, only inside the **existing TLS Nginx server**, add a location
 equivalent to the following after replacing the placeholder with the
 actual HA host address:
 
 ```nginx
-location ^~ /stream/ {
+location ~ ^/(stream|stream-av)/ {
     allow HA_PRIVATE_IP;
     deny all;
     limit_except GET { deny all; }
@@ -89,9 +90,11 @@ The separate authenticated `/stream-av/<serial>` route uses the SDK's
 `recordFragments()` API to emit fragmented MP4 with video and an AAC audio
 track when the camera sends AAC. This route is for HomeKit's direct FFmpeg
 input; the existing `/stream/<serial>` raw H.264 route remains for go2rtc.
-Both routes require the existing bearer and HTTPS controls. Add a separate
-Nginx proxy location for `/stream-av/` with the same auth, HA-host allowlist,
-streaming timeout and disabled response buffering as `/stream/`.
+Both routes require the existing bearer and HTTPS controls. The Nginx
+location in the Media delivery section matches both paths, applying the
+same HA-host allowlist, bearer propagation, streaming timeout and
+disabled response buffering. Remove any older overlapping `^~ /stream/`
+location only after checking that the replacement covers both routes.
 Do not expose either route to the public internet.
 
 G.711 source audio is not carried by the SDK MP4 muxer and is not implicitly

@@ -50,7 +50,7 @@ async function get(handler, path, authorization, method = "GET") {
 
 test("all media endpoints reject anonymous access before SDK state is read", async () => {
   const { handler, calls } = setup();
-  for (const path of ["/snapshot/SN", "/event-image/SN", "/clip/SN", "/stream/SN", "/not-a-route"]) {
+  for (const path of ["/snapshot/SN", "/event-image/SN", "/clip/SN", "/stream/SN", "/stream-av/SN", "/not-a-route"]) {
     const out = await get(handler, path);
     assert.equal(out.code, 401, path);
     assert.deepEqual(JSON.parse(out.body), { error: "unauthorized" });
