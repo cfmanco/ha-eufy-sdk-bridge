@@ -58,8 +58,8 @@ location ^~ /stream/ {
 
 Keep the Node bridge's own bearer validation. Set GO2RTC_ENABLE=0 on the
 Pi, since Home Assistant uses its managed go2rtc process for WebRTC.
-Disable existing detector-based idle suspension (STREAM_IDLE_MS=0) if
-you want an uninterrupted user-initiated stream. The new active-viewer
+Detector-based idle suspension is disabled by default (STREAM_IDLE_MS=0)
+so a viewer decides when live video ends. The new active-viewer
 code extends SDK budget notices while the viewer is connected; it does
 not impose a new viewing-time or battery policy.
 
