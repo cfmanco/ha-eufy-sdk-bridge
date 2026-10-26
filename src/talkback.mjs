@@ -89,6 +89,9 @@ export async function serveTalkback({ ctx, req, res, serial, respondJson }) {
         talk.on("stop", () => {
           stopped = true;
         });
+        talk.on("budget", (notice) => {
+          if (active) notice.extend();
+        });
         talk.on("error", (error) => {
           ctx.eventLog?.(`/talkback ${serial} media error: ${error?.name ?? "Error"}`);
           res.destroy();
