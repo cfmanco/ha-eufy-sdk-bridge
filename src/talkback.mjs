@@ -77,14 +77,20 @@ export async function serveTalkback({ ctx, req, res, serial, respondJson }) {
       if (!active) break;
       if (!chunk.length) continue;
       if (stopped || !talk) {
-        if (talk) await talk.stop();
+        if (talk) {
+      try {
+        await talk.stop();
+      } catch (error) {
+        ctx.eventLog?.(`/talkback ${serial} teardown failed: ${error?.name ?? "Error"}`);
+      }
+    }
         talk = await camera.talkback();
         stopped = false;
         talk.on("stop", () => {
           stopped = true;
         });
         talk.on("error", (error) => {
-          ctx.eventLog?.(`/talkback ${serial} media error: ${String(error?.message ?? error)}`);
+          ctx.eventLog?.(`/talkback ${serial} media error: ${error?.name ?? "Error"}`);
           res.destroy();
         });
         writable = talk.writable();
@@ -94,7 +100,7 @@ export async function serveTalkback({ ctx, req, res, serial, respondJson }) {
     }
 
     if (active && !res.destroyed) {
-      await finishInput(talk, writable);
+      if (!stopped) await finishInput(talk, writable);
       res.end();
     }
   } catch (error) {
@@ -102,7 +108,7 @@ export async function serveTalkback({ ctx, req, res, serial, respondJson }) {
       const status = isSupersededStreamClient(error) ? 503 : 502;
       if (res.headersSent) res.destroy();
       else respondJson(res, status, { error: "talkback media unavailable" });
-      ctx.eventLog?.(`/talkback ${serial} failed: ${String(error?.message ?? error)}`);
+      ctx.eventLog?.(`/talkback ${serial} failed: ${error?.name ?? "Error"}`);
     }
   } finally {
     active = false;
