@@ -8,6 +8,7 @@ import { streamClientFor, dropStreamClient, isSupersededStreamClient } from "../
 import { createLiveStillTap } from "./live-still.mjs";
 import { keepLiveUntilDisconnect } from "./live-budget.mjs";
 import { serveMuxedStream } from "./stream-av.mjs";
+import { serveTalkback } from "./talkback.mjs";
 import { onBatteryPower } from "./power.mjs";
 import { storedThumbnailSeenAt } from "./stored-thumbnail.mjs";
 import { redactSecrets } from "./redact.mjs";
@@ -111,6 +112,15 @@ export function createHttpHandler(ctx) {
         return json(res, 200, { ok: true });
       }
       return json(res, 401, { error: "unauthorized" }, { "www-authenticate": 'Bearer realm="eufy-bridge"' });
+    }
+    if (kind === "talkback" && sn && req.method === "POST") {
+      if (url.pathname !== `/talkback/${sn}` || url.search || !/^[A-Za-z0-9_-]{1,128}$/.test(sn)) {
+        return json(res, 404, { error: "not found" });
+      }
+      if (req.headers["content-type"]?.split(";")[0] !== "audio/aac") {
+        return json(res, 415, { error: "expected AAC ADTS media" });
+      }
+      return serveTalkback({ ctx, req, res, serial: sn, respondJson: json });
     }
     if (req.method != null && req.method !== "GET") {
       return json(res, 405, { error: "method not allowed" }, { allow: "GET" });

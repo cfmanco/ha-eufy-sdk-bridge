@@ -37,10 +37,11 @@ equivalent to the following after replacing the placeholder with the
 actual HA host address:
 
 ```nginx
-location ~ ^/(stream|stream-av)/ {
+location ~ ^/(stream|stream-av|talkback)/ {
     allow HA_PRIVATE_IP;
     deny all;
-    limit_except GET { deny all; }
+    limit_except GET POST { deny all; }
+    proxy_request_buffering off;  # required for live microphone POST
 
     proxy_pass http://127.0.0.1:3000;
     proxy_http_version 1.1;
@@ -100,3 +101,14 @@ Do not expose either route to the public internet.
 G.711 source audio is not carried by the SDK MP4 muxer and is not implicitly
 converted to AAC. Confirm the particular camera's actual audio codec and
 Apple Home playback before asserting complete support.
+
+## Apple Home microphone return path
+
+The same restricted TLS listener must proxy `POST /talkback/<serial>`.
+The Home Assistant HomeKit accessory receives encrypted RTP microphone data,
+converts it to AAC-LC 16 kHz mono ADTS and uploads it with the existing bridge
+bearer. Nginx request buffering **must be disabled** on this route, otherwise
+the body will not reach the SDK until the microphone recording ends.
+The bridge starts SDK `camera.talkback()` only after audio arrives and stops
+it when the HomeKit microphone stream disconnects. The camera's upstream
+P2P media and HomeKit sessions are not exposed to the public network.
