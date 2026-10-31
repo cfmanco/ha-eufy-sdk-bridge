@@ -1,62 +1,76 @@
-# Eufy SDK Bridge — hardened local Home Assistant app
+# Eufy SDK Bridge — isolated Home Assistant app (v0.2.0)
 
-**Preview:** Incoming and outgoing HomeKit audio still require an Apple Home
-hardware test. This app installs the existing Node bridge alongside Core.
+**Feature preview:** Apple Home microphone audio is not yet verified on the
+physical Eufy doorbell. Installing this app does not replace the HomeKit Bridge.
 
-## Security and transport
+## Actual security boundary
 
-- Supervisor uses host networking for this app, but the bridge binds its
-  HTTP/WebSocket listener to **127.0.0.1** only. No Home Assistant LAN
-  port, ingress service or management UI is published.
-- The Eufy integration must use **127.0.0.1**, app **bridge_port** (default
-  3000), and the same 64-character bridge token entered in app options.
-  This literal host-loopback endpoint uses bearer-authenticated HTTP/WS;
-  other hosts continue using verified HTTPS/WSS.
-- The bundled go2rtc is disabled. Browser WebRTC and HomeKit run in Core.
-- Authentication secrets, session state and thumbnails live in the app's
-  private persistent directory, with the Node daemon running unprivileged.
+- Uses the **Supervisor internal Docker network**, never host network. The
+  app declares **no published ports**, ingress, host hardware access or
+  privileged capabilities. Expected Supervisor security rating: **7/8**
+  (5 base + 2 for no host network and no mapped ports).
+- The Node process binds to 0.0.0.0 **inside its isolated container network**
+  and serves **TLS 1.3** on the configured internal port (default 3000).
+  Other installed apps on the internal network can reach the socket but must
+  authenticate. The network is **not** a per-app private overlay.
+- A unique self-signed TLS certificate and private key are generated at first
+  startup in the app's persistent private directory. The key is never baked
+  into the image or printed in logs.
+- The app logs the SHA256 fingerprint of its public certificate. The
+  companion `cfmanco/ha-eufy-sdk` integration can pin that fingerprint for
+  authenticated **WSS and HTTPS** requests. This prevents certificate
+  substitution by other containers on the shared internal network.
+- Bearer authentication is additionally required for WebSocket commands
+  and camera media, including the HomeKit talkback endpoint. The bridge
+  has no listener reachable from other LAN or WAN VLANs.
+- The Node daemon runs as an unprivileged account. Eufy credentials, FCM
+  state and persistent sessions remain under Supervisor's `/data`.
 
-## Installation — leave stopped initially
+The score is a configuration rating, not a security audit or proof of
+protection against a compromised Supervisor or host.
 
-1. In Home Assistant, open **Settings → Apps → App store → Repositories**.
-   Add this branch as a repository:
-   `https://github.com/cfmanco/ha-eufy-sdk-bridge#feat/local-p2p-live-view`.
-   Enable **Advanced Mode** if the experimental app is hidden.
-2. Install **Eufy SDK Bridge (hardened local)**. Configure your Eufy
-   account and a mandatory lowercase 64-character hexadecimal
-   `bridge_token`. You can reuse the Raspberry Pi bridge's existing
-   token to avoid changing the integration's credential. Never paste
-   tokens into chat or repository files.
-3. Save a Home Assistant backup and independently preserve the Pi's
-   session files. Do not delete or reset the running Raspberry Pi
-   installation yet.
+## Install (leave the app stopped at first)
+
+1. Add the repository `https://github.com/cfmanco/ha-eufy-sdk-bridge`
+   under **Settings → Apps → App store → Repositories** after this
+   feature is merged and the repository is refreshed.
+2. Install **Eufy SDK Bridge (hardened local)**, version 0.2.0 or newer,
+   but leave it stopped. Configure the Eufy account and a random, private
+   64-character lowercase hexadecimal `bridge_token`. Copying the
+   existing Pi bridge token is permitted, but do not place it in a public
+   issue, chat, or source file.
+3. Back up Home Assistant's configuration and independently preserve the
+   Pi bridge's session files. Keep the Pi deployment available for rollback.
 
 ## Cutover when ready
 
-1. **Stop**, but do not remove, the Pi bridge. Running both concurrently
-   can displace the account's login and push session.
-2. Start this app. Its log should show a listener at
-   `127.0.0.1:3000` (or your configured bridge_port).
-3. Update the **existing Eufy SDK integration entry** to host
-   `127.0.0.1` and the app's port; retain the shared bridge token.
-   Do not add a duplicate integration entry.
-4. Reload the Eufy integration and the existing HomeKit Bridge. Verify
-   inventory, a physical doorbell press, snapshots, browser WebRTC,
-   Apple Home video/listening and return microphone audio.
-5. If validation fails, stop this app, restart the Pi container and
-   restore the prior integration hostname and port. Preserve both sets
-   of session files.
+1. Stop (do not delete) the existing Pi bridge so two clients do not fight
+   over the same Eufy account session.
+2. Start the app and read **Supervisor internal host**, **TLS certificate
+   SHA256** and **port** from its log. The host contains a repository ID;
+   do not guess or hardcode that prefix.
+3. Reconfigure the *existing* `eufy_sdk` integration entry using that
+   internal DNS host, port, the same bearer token and the public TLS
+   fingerprint shown in the app log. Use the matching Python feature
+   branch with certificate pinning; **the older published integration
+   cannot validate this self-signed certificate**.
+4. Reload the Eufy integration and HomeKit Bridge, then verify camera
+   inventory, doorbell events, thumbnails, browser WebRTC, Apple Home
+   playback/listening and microphone-to-doorbell audio.
+5. To roll back, stop this app, restore the old Pi HTTPS host and port in
+   the integration and restart the Pi container. Preserve both instances'
+   session state. Do not use duplicate integration entries.
 
-## Build details and known limitations
+## Rebuilds and rotation
 
-The app builds source from the pinned fork commit
-`919f3ef0a84173f8b10518cbf09d0303b280bd17` and installs the
-commit's npm lockfile dependencies. It does **not** pull the upstream
-bridge image. Update the pinned revision only after reviewing future
-bridge changes. Supervisor needs internet access to GitHub and the
-public npm registry when building the app.
+The image fetches pinned fork source at
+`c160b435f8e0bcef28127b0345a152792ac0aad9` and installs locked
+dependencies. A new app release should update this pin deliberately.
+Do not delete the app's private TLS key or certificate: replacing them
+changes the fingerprint and interrupts connection until the integration
+pin is updated. TLS certificates are initially valid for five years and
+require planned renewal before expiry.
 
-The app has **not** been built on the physical Green or validated against
-the live doorbell. Moving from the Raspberry Pi does not automatically
-migrate Eufy/FCM session files; an Eufy login or 2FA prompt may be
-necessary. Keep both installations until end-to-end validation passes.
+The isolated app has not been built on the physical Green. Eufy's P2P
+behaviour behind the Supervisor Docker bridge is unverified; UDP
+connectivity to the HomeBase must be validated before retiring the Pi.

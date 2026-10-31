@@ -38,8 +38,8 @@ drift out of sync.
 
 This fork now includes a Supervisor-managed app at
 [`eufy_sdk_bridge/`](./eufy_sdk_bridge). It builds the pinned forked bridge,
-runs on aarch64 Home Assistant Green, binds its authenticated control and
-media transport to **127.0.0.1** and disables bundled go2rtc. The matching
+runs on aarch64 Home Assistant Green, serves pinned TLS 1.3 on the **private Supervisor Docker network** with
+no published host ports and disables bundled go2rtc. The matching
 `cfmanco/ha-eufy-sdk` integration can use the same host-loopback transport.
 
 Install from this repository's `feat/local-p2p-live-view` branch; see the
