@@ -1,4 +1,4 @@
-name: Eufy SDK Bridge (hardened local)
+name: Eufy SDK Bridge (isolated preview)
 version: 0.2.0
 slug: eufy_sdk_bridge_local
 description: TLS-authenticated Eufy SDK bridge on the private Supervisor network.

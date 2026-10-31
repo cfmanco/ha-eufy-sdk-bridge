@@ -34,7 +34,7 @@ protection against a compromised Supervisor or host.
 1. Add the repository `https://github.com/cfmanco/ha-eufy-sdk-bridge`
    under **Settings → Apps → App store → Repositories** after this
    feature is merged and the repository is refreshed.
-2. Install **Eufy SDK Bridge (hardened local)**, version 0.2.0 or newer,
+2. Install **Eufy SDK Bridge (isolated preview)**, version 0.2.0 or newer,
    but leave it stopped. Configure the Eufy account and a random, private
    64-character lowercase hexadecimal `bridge_token`. Copying the
    existing Pi bridge token is permitted, but do not place it in a public

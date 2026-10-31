@@ -34,7 +34,7 @@ Video is deliberately **not** on the WebSocket: the WS hands back a URL, and _co
 is what starts the camera — disconnecting is what stops it_. There is no "stream is running" flag to
 drift out of sync.
 
-## Home Assistant Green — hardened local app (feature preview)
+## Home Assistant Green — isolated app (feature preview)
 
 This fork now includes a Supervisor-managed app at
 [`eufy_sdk_bridge/`](./eufy_sdk_bridge). It builds the pinned forked bridge,

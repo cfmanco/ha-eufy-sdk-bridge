@@ -1,4 +1,4 @@
-# Eufy SDK Bridge — hardened Home Assistant app
+# Eufy SDK Bridge — isolated Home Assistant app
 
 A Supervisor-managed, internally networked build of `cfmanco/ha-eufy-sdk-bridge` for Home Assistant Green.
 The existing `eufy_sdk` Python integration still provides entities, doorbell events and HomeKit camera support.
