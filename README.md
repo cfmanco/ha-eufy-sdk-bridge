@@ -1,10 +1,11 @@
 # ha-eufy-sdk-bridge
 
-> **Security-hardening branch — private pilot operational as of 25 October 2026, not production-approved.**
-> A matched [Home Assistant security-hardening client](https://github.com/cfmanco/ha-eufy-sdk/tree/dev/security-hardening)
-> now connects over authenticated WSS and retrieves still images over HTTPS through a restricted TLS
-> gateway. Doorbell events and entity updates were verified on a separate Home Assistant OS appliance.
-> **Live video remains intentionally disabled; formal security acceptance is outstanding.**
+> **Hardened HomeKit feature branch — implementation preview, not production-approved.**
+> The original 25 October two-host security pilot established authenticated control,
+> doorbell events and snapshots. This branch additionally implements isolated live
+> media and HomeKit return audio, but Apple Home hardware acceptance is outstanding.
+> The new Home Assistant Green app is host-loopback only; the historical Pi deployment
+> remains available over verified HTTPS/WSS.
 >
 > For the tested two-host setup, requirements, checks and remaining release gates, use the
 > [hardened deployment runbook](docs/security-deployment.md). The [architecture](docs/security-architecture.md)
