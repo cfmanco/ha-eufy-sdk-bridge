@@ -4,7 +4,7 @@ FROM node:24-alpine
 
 ARG BUILD_VERSION=0.2.0
 ARG BUILD_ARCH=aarch64
-ARG BRIDGE_REV=c160b435f8e0bcef28127b0345a152792ac0aad9
+ARG BRIDGE_REV=415fb6a2c0cbc1fbf0978225a98111298baa24ec
 
 RUN apk add --no-cache ca-certificates curl jq su-exec ffmpeg openssl
 WORKDIR /app

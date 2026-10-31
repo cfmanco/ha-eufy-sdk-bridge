@@ -64,7 +64,7 @@ protection against a compromised Supervisor or host.
 ## Rebuilds and rotation
 
 The image fetches pinned fork source at
-`c160b435f8e0bcef28127b0345a152792ac0aad9` and installs locked
+`415fb6a2c0cbc1fbf0978225a98111298baa24ec` and installs locked
 dependencies. A new app release should update this pin deliberately.
 Do not delete the app's private TLS key or certificate: replacing them
 changes the fingerprint and interrupts connection until the integration
