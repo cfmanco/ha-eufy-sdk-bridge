@@ -24,7 +24,7 @@ function parseRtspBase(raw) {
     !parsed.hostname ||
     parsed.username ||
     parsed.password ||
-    parsed.pathname !== "/" ||
+    (parsed.pathname !== "" && parsed.pathname !== "/") ||
     parsed.search ||
     parsed.hash
   ) {
