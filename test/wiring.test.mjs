@@ -108,8 +108,8 @@ function fakeEufy() {
 }
 
 /** The same assembly server.mjs performs, against a fake client + a non-listening http server. */
-function buildCtx() {
-  const config = loadConfig({ EUFY_EMAIL: "x@y.z", EUFY_PASSWORD: "pw" });
+function buildCtx(env = {}) {
+  const config = loadConfig({ EUFY_EMAIL: "x@y.z", EUFY_PASSWORD: "pw", ...env });
   const state = createState();
   const eufy = fakeEufy();
   const ctx = { ...config, eufy, state, accessControl: { authorize: () => true } };
@@ -260,5 +260,29 @@ test("ws: device.action reaches the ptz surface, bare verbs and dotted preset pa
   assert.equal(fixed[0].ok, false);
   assert.match(fixed[0].error, /no action 'left'/);
 
+  httpServer.close();
+});
+
+test("stream.start advertises external go2rtc when bundled process is disabled", async () => {
+  const { ctx, state, httpServer } = buildCtx({
+    GO2RTC_ENABLE: "0",
+    GO2RTC_RTSP_BASE: "rtsp://frigate.internal:8558",
+  });
+  state.flags.ready = true;
+  const message = (await wsCall(ctx, { id: 9, cmd: "stream.start", sn: "CAM1" }))[0];
+  assert.equal(message.rtsp, "rtsp://frigate.internal:8558/CAM1");
+  assert.equal(message.path, "/stream/CAM1");
+  httpServer.close();
+});
+
+test("stream.start omits RTSP only when no converter is configured", async () => {
+  const { ctx, state, httpServer } = buildCtx({
+    GO2RTC_ENABLE: "0",
+    GO2RTC_RTSP_AVAILABLE: "0",
+  });
+  state.flags.ready = true;
+  const message = (await wsCall(ctx, { id: 10, cmd: "stream.start", sn: "CAM1" }))[0];
+  assert.equal(Object.hasOwn(message, "rtsp"), false);
+  assert.equal(message.path, "/stream/CAM1");
   httpServer.close();
 });

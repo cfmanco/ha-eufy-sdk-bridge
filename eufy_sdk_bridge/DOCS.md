@@ -9,6 +9,7 @@
 - A unique self-signed TLS certificate and private key are generated at first startup in the app's persistent private directory. The key is never baked into the image or printed in logs.
 - The app logs the SHA256 fingerprint of its public certificate. The companion `cfmanco/ha-eufy-sdk` integration can pin that fingerprint for authenticated **WSS and HTTPS** requests. This prevents certificate substitution by other containers on the shared internal network.
 - Bearer authentication is additionally required for WebSocket commands and camera media, including the HomeKit talkback endpoint. The bridge has no listener reachable from other LAN or WAN VLANs.
+- No RTSP converter runs in the app: `GO2RTC_ENABLE=0` prevents spawning one, while the separate `GO2RTC_RTSP_AVAILABLE=0` setting suppresses unusable RTSP discovery. Standalone Frigate/go2rtc deployments can keep RTSP enabled even when spawning is disabled.
 - The Node daemon runs as an unprivileged account. Eufy credentials, FCM state and persistent sessions remain under Supervisor's `/data`.
 
 The score is a configuration rating, not a security audit or proof of protection against a compromised Supervisor or host.
