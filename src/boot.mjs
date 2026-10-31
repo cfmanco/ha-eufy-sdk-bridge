@@ -112,8 +112,11 @@ export function createBoot(ctx) {
       // a `stream`, NOT deviceClass==="camera" (the SDK downgrades a camera behind a HomeBase to "other"),
       // so go2rtc registers exactly the cameras HA shows.
       const summaries = await ctx.deviceList();
-      const cams = await writeGo2rtcConfig(cfg, summaries);
-      startGo2rtc();
+      const cams = summaries.filter((device) => Boolean(device.stream)).map((device) => device.sn);
+      if (cfg.go2rtcEnable) {
+        await writeGo2rtcConfig(cfg, summaries);
+        startGo2rtc();
+      }
       flags.ready = true;
       timers.watchdog ??= setInterval(() => void ctx.watchdogTick(), 2 * 60_000);
       if (cfg.streamIdleMs) timers.streamIdle ??= setInterval(() => ctx.streamIdleTick(), 30_000);

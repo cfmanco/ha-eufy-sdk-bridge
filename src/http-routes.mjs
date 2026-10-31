@@ -92,7 +92,7 @@ export function createHttpHandler(ctx) {
     const ip = req.socket?.remoteAddress ?? "?";
     const ua = req.headers["user-agent"] ?? "";
     ctx.eventLog?.(`/stream ${sn} requested by ${ip}${ua ? ` (UA: ${ua})` : ""}`);
-    if (!STREAM_CONSUMER_LOG_MS) return;
+    if (!cfg.go2rtcEnable || !STREAM_CONSUMER_LOG_MS) return;
     const now = Date.now();
     if (now - (lastConsumerLog.get(sn) ?? 0) < STREAM_CONSUMER_LOG_MS) return;
     lastConsumerLog.set(sn, now);

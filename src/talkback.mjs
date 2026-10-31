@@ -53,9 +53,20 @@ export async function serveTalkback({ ctx, req, res, serial, respondJson }) {
   let talk = null;
   let writable = null;
   let stopped = false;
+  const stopTalk = async () => {
+    const current = talk;
+    talk = null;
+    writable = null;
+    if (!current) return;
+    try {
+      await current.stop();
+    } catch (error) {
+      ctx.eventLog?.(`/talkback ${serial} teardown failed: ${error?.name ?? "Error"}`);
+    }
+  };
   const onGone = () => {
     active = false;
-    void talk?.stop();
+    void stopTalk();
   };
   req.once("aborted", onGone);
   res.once("close", onGone);
@@ -77,13 +88,7 @@ export async function serveTalkback({ ctx, req, res, serial, respondJson }) {
       if (!active) break;
       if (!chunk.length) continue;
       if (stopped || !talk) {
-        if (talk) {
-          try {
-            await talk.stop();
-          } catch (error) {
-            ctx.eventLog?.(`/talkback ${serial} teardown failed: ${error?.name ?? "Error"}`);
-          }
-        }
+        await stopTalk();
         talk = await camera.talkback();
         stopped = false;
         talk.on("stop", () => {
@@ -117,6 +122,6 @@ export async function serveTalkback({ ctx, req, res, serial, respondJson }) {
     active = false;
     req.off("aborted", onGone);
     res.off("close", onGone);
-    if (talk) await talk.stop();
+    await stopTalk();
   }
 }
