@@ -25,12 +25,12 @@ options:
 schema:
   email: str
   password: password
-  bridge_token: 'match(^[0-9a-f]{64}$)'
-  country: 'match(^[A-Z]{2}$)'
-  bridge_port: 'int(1024,65535)'
-  poll_ms: 'int(0,)'
-  stream_idle_ms: 'int(0,)'
-  stream_fail_backoff_ms: 'int(0,)'
-  snapshot_live: 'list(auto|on|off)'
+  bridge_token: "match(^[0-9a-f]{64}$)"
+  country: "match(^[A-Z]{2}$)"
+  bridge_port: "int(1024,65535)"
+  poll_ms: "int(0,)"
+  stream_idle_ms: "int(0,)"
+  stream_fail_backoff_ms: "int(0,)"
+  snapshot_live: "list(auto|on|off)"
   event_log: bool
   debug: bool

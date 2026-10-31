@@ -78,12 +78,12 @@ export async function serveTalkback({ ctx, req, res, serial, respondJson }) {
       if (!chunk.length) continue;
       if (stopped || !talk) {
         if (talk) {
-      try {
-        await talk.stop();
-      } catch (error) {
-        ctx.eventLog?.(`/talkback ${serial} teardown failed: ${error?.name ?? "Error"}`);
-      }
-    }
+          try {
+            await talk.stop();
+          } catch (error) {
+            ctx.eventLog?.(`/talkback ${serial} teardown failed: ${error?.name ?? "Error"}`);
+          }
+        }
         talk = await camera.talkback();
         stopped = false;
         talk.on("stop", () => {
