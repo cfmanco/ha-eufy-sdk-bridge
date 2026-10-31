@@ -38,6 +38,7 @@ async function setup() {
   state.flags.ready = true;
   const t = { state, broadcasts: [], feeds: [], opens: 0, dropped: [], failures: [], gate: null };
   const ctx = {
+    accessControl: { authorize: () => true },
     ...config,
     state,
     eventImageDir: undefined,

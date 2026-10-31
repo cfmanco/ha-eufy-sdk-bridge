@@ -1,5 +1,18 @@
 # ha-eufy-sdk-bridge
 
+> **Hardened HomeKit feature branch — implementation preview, not production-approved.**
+> The original 25 October two-host security pilot established authenticated control,
+> doorbell events and snapshots. This branch additionally implements isolated live
+> media and HomeKit return audio, but Apple Home hardware acceptance is outstanding.
+> The new Home Assistant Green app is host-loopback only; the historical Pi deployment
+> remains available over verified HTTPS/WSS.
+>
+> For the tested two-host setup, requirements, checks and remaining release gates, use the
+> [hardened deployment runbook](docs/security-deployment.md). The [architecture](docs/security-architecture.md)
+> and [implementation plan](docs/security-implementation-plan.md) remain design references.
+> **Do not run the upstream quick-start, host-networking or published-image instructions below on
+> this branch.** They describe upstream behaviour, not a hardened deployment.
+
 [![CI](https://github.com/mega-yfue/ha-eufy-sdk-bridge/actions/workflows/ci.yml/badge.svg)](https://github.com/mega-yfue/ha-eufy-sdk-bridge/actions/workflows/ci.yml)
 [![node](https://img.shields.io/badge/node-%E2%89%A524-brightgreen?logo=nodedotjs&logoColor=white)](./package.json)
 [![license](https://img.shields.io/badge/license-Apache--2.0-blue)](./LICENSE)
@@ -20,6 +33,19 @@ HTTP  :3000/healthz        which cameras are streaming
 Video is deliberately **not** on the WebSocket: the WS hands back a URL, and _connecting to that URL
 is what starts the camera — disconnecting is what stops it_. There is no "stream is running" flag to
 drift out of sync.
+
+## Home Assistant Green — hardened local app (feature preview)
+
+This fork now includes a Supervisor-managed app at
+[`eufy_sdk_bridge/`](./eufy_sdk_bridge). It builds the pinned forked bridge,
+runs on aarch64 Home Assistant Green, binds its authenticated control and
+media transport to **127.0.0.1** and disables bundled go2rtc. The matching
+`cfmanco/ha-eufy-sdk` integration can use the same host-loopback transport.
+
+Install from this repository's `feat/local-p2p-live-view` branch; see the
+[installation and rollback instructions](./eufy_sdk_bridge/DOCS.md). This
+does **not** deploy to Green automatically, remove the Raspberry Pi
+installation or claim real-world HomeKit talkback verification.
 
 ## Run it
 

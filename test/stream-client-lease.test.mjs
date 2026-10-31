@@ -40,6 +40,7 @@ function setup(create) {
   state.flags.ready = true;
   const failures = [];
   const ctx = {
+    accessControl: { authorize: () => true },
     ...config,
     state,
     eventLog: () => {},

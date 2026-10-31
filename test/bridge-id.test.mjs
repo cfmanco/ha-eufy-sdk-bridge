@@ -30,6 +30,7 @@ test("a damaged id file is replaced with a fresh id", () => {
 test("/healthz reports the bridge id", async () => {
   const state = createState();
   const handler = createHttpHandler({
+    accessControl: { authorize: () => true },
     ...loadConfig({ EUFY_EMAIL: "x@y.z", EUFY_PASSWORD: "pw" }),
     state,
     bridgeId: "3f2a0000-0000-4000-8000-000000000001",

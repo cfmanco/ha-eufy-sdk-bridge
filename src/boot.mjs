@@ -15,7 +15,7 @@ import { writeGo2rtcConfig } from "../go2rtc-config.mjs";
  * Best-effort; never throws.
  */
 async function logCameraChannelMap(eufy, cams) {
-  const camSns = new Set(cams.map((c) => c.sn));
+  const camSns = new Set(cams); // writeGo2rtcConfig returns serial strings, not device objects
   const rows = (await eufy.getDevices())
     .filter((d) => camSns.has(d.sn))
     .map((d) => {

@@ -20,6 +20,7 @@ function setup() {
   const state = createState();
   state.flags.ready = true;
   const handler = createHttpHandler({
+    accessControl: { authorize: () => true },
     ...loadConfig({ EUFY_EMAIL: "x@y.z", EUFY_PASSWORD: "pw" }),
     state,
     eventImageDir: dir,

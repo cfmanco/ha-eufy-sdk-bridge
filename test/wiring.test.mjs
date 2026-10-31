@@ -112,7 +112,7 @@ function buildCtx() {
   const config = loadConfig({ EUFY_EMAIL: "x@y.z", EUFY_PASSWORD: "pw" });
   const state = createState();
   const eufy = fakeEufy();
-  const ctx = { ...config, eufy, state };
+  const ctx = { ...config, eufy, state, accessControl: { authorize: () => true } };
   Object.assign(
     ctx,
     createFaces(ctx),
@@ -225,7 +225,7 @@ test("http: /healthz reports ok + auth + empty streaming", async () => {
   assert.equal(out.ok, true);
   assert.deepEqual(out.auth, { state: "pending" });
   assert.deepEqual(out.streaming, []);
-  assert.equal(out.streamIdleMs, 300000);
+  assert.equal(out.streamIdleMs, 0); // new default: operator controls how long a viewer remains live
   assert.equal("lastActivitySec" in out, false);
   assert.equal("stalled" in out, false);
   httpServer.close();

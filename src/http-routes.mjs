@@ -1,4 +1,4 @@
-// HTTP surface: live video (go2rtc pulls /stream/<sn>), a snapshot still, the persisted last-event
+// HTTP surface: authenticated raw video and muxed A/V, snapshots, the persisted last-event
 // thumbnail, the latest detection's stored clip, and /healthz. Video is deliberately OFF the WS — connecting to /stream is what opens the
 // camera, disconnecting is what stops it, so there's no "is it streaming" flag to drift. Returns the
 // request handler; server.mjs wraps it in http.createServer.
@@ -6,13 +6,16 @@ import fs from "node:fs";
 import path from "node:path";
 import { streamClientFor, dropStreamClient, isSupersededStreamClient } from "../streams.mjs";
 import { createLiveStillTap } from "./live-still.mjs";
+import { keepLiveUntilDisconnect } from "./live-budget.mjs";
+import { serveMuxedStream } from "./stream-av.mjs";
+import { serveTalkback } from "./talkback.mjs";
 import { onBatteryPower } from "./power.mjs";
 import { storedThumbnailSeenAt } from "./stored-thumbnail.mjs";
 import { redactSecrets } from "./redact.mjs";
 
-function json(res, code, body) {
+function json(res, code, body, extraHeaders = {}) {
   const s = redactSecrets(JSON.stringify(body));
-  res.writeHead(code, { "content-type": "application/json", "content-length": Buffer.byteLength(s) });
+  res.writeHead(code, { "content-type": "application/json", "content-length": Buffer.byteLength(s), ...extraHeaders });
   res.end(s);
 }
 
@@ -97,8 +100,31 @@ export function createHttpHandler(ctx) {
   }
 
   return async function handleHttp(req, res) {
-    const url = new URL(req.url, `http://${req.headers.host}`);
+    // Treat the request target as relative to a fixed base, never to the client-supplied Host header.
+    const url = new URL(req.url, "http://bridge.invalid");
     const [, kind, sn] = url.pathname.split("/");
+
+    // Refuse unauthorised media access before checking readiness, camera state or cached thumbnails.
+    // An anonymous liveness probe reveals nothing beyond the fact that the process is running.
+    const authorised = ctx.accessControl?.authorize(req) === true;
+    if (!authorised) {
+      if (url.pathname === "/healthz" && (req.method == null || req.method === "GET")) {
+        return json(res, 200, { ok: true });
+      }
+      return json(res, 401, { error: "unauthorized" }, { "www-authenticate": 'Bearer realm="eufy-bridge"' });
+    }
+    if (kind === "talkback" && sn && req.method === "POST") {
+      if (url.pathname !== `/talkback/${sn}` || url.search || !/^[A-Za-z0-9_-]{1,128}$/.test(sn)) {
+        return json(res, 404, { error: "not found" });
+      }
+      if (req.headers["content-type"]?.split(";")[0] !== "audio/aac") {
+        return json(res, 415, { error: "expected AAC ADTS media" });
+      }
+      return serveTalkback({ ctx, req, res, serial: sn, respondJson: json });
+    }
+    if (req.method != null && req.method !== "GET") {
+      return json(res, 405, { error: "method not allowed" }, { allow: "GET" });
+    }
 
     if (url.pathname === "/healthz") {
       return json(res, 200, {
@@ -298,6 +324,21 @@ export function createHttpHandler(ctx) {
       return res.end(clip.mp4);
     }
 
+    if (kind === "stream-av" && sn) {
+      if (url.pathname !== `/stream-av/${sn}` || url.search) {
+        return json(res, 404, { error: "not found" });
+      }
+      noteStreamRequest(sn, req);
+      return serveMuxedStream({
+        req,
+        res,
+        serial: sn,
+        ctx,
+        openStreamClient,
+        respondJson: json,
+      });
+    }
+
     if (kind === "stream" && sn) {
       noteStreamRequest(sn, req); // trace who is pulling this stream (incl. go2rtc's real consumers)
       if (cfg.streamIdleMs) lastPullAttempt.set(sn, Date.now()); // consumer is asking (watched vs. gone)
@@ -334,11 +375,22 @@ export function createHttpHandler(ctx) {
         // The battery budget only takes effect when this call opens the session, which it does: the stream
         // client is dedicated to /stream (stills go through the control client), so nothing opens it first.
         const budget = cfg.streamBatteryBudgetMs;
-        const feed = await cam.openReadable(budget ? { batteryBudgetMs: budget } : undefined); // Annex-B
+        const liveOptions = budget ? { batteryBudgetMs: budget } : undefined;
+        const feed = await cam.openReadable(liveOptions); // Annex-B
+        // A second consumer on the SDK's shared source receives budget notices.
+        // Keep extending only while the HTTP viewer remains attached; no arbitrary viewing limit.
+        let stopBudget;
+        try {
+          stopBudget = await keepLiveUntilDisconnect(cam, () => !gone && !res.destroyed, liveOptions);
+        } catch (e) {
+          feed.destroy();
+          throw e;
+        }
         res.off("close", onGone);
         ctx.noteStreamOpened?.(sn); // reachable again → clear any failure backoff
         if (gone) {
-          feed.destroy(); // detaches from the shared live source, so it can stop
+          stopBudget();
+          feed.destroy();
           return;
         }
         let feeds = openFeeds.get(sn);
@@ -365,6 +417,7 @@ export function createHttpHandler(ctx) {
           if (cleanedUp) return;
           cleanedUp = true;
           void still.flush();
+          stopBudget(); // drops the auxiliary budget-notice consumer
           feed.destroy();
           // pipe() ends the response only on a clean end. A feed that failed (P2P drop, warm-up timeout) or
           // closed early would leave ffmpeg on an open, silent socket until its own timeout — abort the

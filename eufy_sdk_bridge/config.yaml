@@ -1,0 +1,36 @@
+name: Eufy SDK Bridge (hardened local)
+version: 0.1.0
+slug: eufy_sdk_bridge_local
+description: Locally isolated Eufy SDK bridge for Home Assistant and HomeKit audio.
+url: https://github.com/cfmanco/ha-eufy-sdk-bridge
+arch:
+  - aarch64
+  - amd64
+stage: experimental
+startup: application
+boot: manual
+init: true
+host_network: true
+options:
+  email: ""
+  password: ""
+  country: GB
+  bridge_port: 3000
+  poll_ms: 600000
+  stream_idle_ms: 0
+  stream_fail_backoff_ms: 30000
+  snapshot_live: auto
+  event_log: true
+  debug: false
+schema:
+  email: str
+  password: password
+  bridge_token: "match(^[0-9a-f]{64}$)"
+  country: "match(^[A-Z]{2}$)"
+  bridge_port: "int(1024,65535)"
+  poll_ms: "int(0,)"
+  stream_idle_ms: "int(0,)"
+  stream_fail_backoff_ms: "int(0,)"
+  snapshot_live: "list(auto|on|off)"
+  event_log: bool
+  debug: bool

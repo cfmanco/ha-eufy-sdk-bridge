@@ -36,6 +36,7 @@ test("an HTTP error body carrying an echoed token is redacted", async () => {
   state.flags.ready = true;
   state.streamBackoff.set("SN", { until: Date.now() + 60_000, streak: 1, reason: SIGN_ERROR });
   const handler = createHttpHandler({
+    accessControl: { authorize: () => true },
     ...loadConfig({ EUFY_EMAIL: "x@y.z", EUFY_PASSWORD: "pw" }),
     state,
     streamBackoffMs: () => 60_000,
