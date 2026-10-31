@@ -45,3 +45,38 @@ test("openudid is undefined by default and taken from BRIDGE_OPENUDID when set",
   assert.equal(loadConfig({ ...base, BRIDGE_OPENUDID: "abcd1234abcd1234" }).cfg.openudid, "abcd1234abcd1234");
   assert.equal(loadConfig({ ...base, BRIDGE_OPENUDID: "" }).cfg.openudid, undefined); // empty → default
 });
+
+test("separate go2rtc does not suppress RTSP discovery", () => {
+  const external = loadConfig({ ...base, GO2RTC_ENABLE: "0" }).cfg;
+  assert.equal(external.go2rtcEnable, false);
+  assert.equal(external.rtspAvailable, true);
+  assert.equal(external.rtspBase, "rtsp://127.0.0.1:8554");
+});
+
+test("Supervisor without a converter explicitly disables RTSP discovery", () => {
+  const app = loadConfig({ ...base, GO2RTC_ENABLE: "0", GO2RTC_RTSP_AVAILABLE: "0" }).cfg;
+  assert.equal(app.go2rtcEnable, false);
+  assert.equal(app.rtspAvailable, false);
+});
+
+test("external Frigate RTSP host and port can be advertised independently", () => {
+  const external = loadConfig({
+    ...base,
+    GO2RTC_ENABLE: "0",
+    GO2RTC_RTSP_BASE: "rtsp://frigate.internal:8558",
+  }).cfg;
+  assert.equal(external.rtspBase, "rtsp://frigate.internal:8558");
+  assert.equal(external.rtspAvailable, true);
+});
+
+test("RTSP endpoint configuration rejects credentials and non-RTSP URLs", () => {
+  for (const endpoint of [
+    "http://frigate.internal:8554",
+    "rtsp://admin:secret@frigate.internal:8554",
+    "rtsp://frigate.internal:8554/path",
+    "rtsp://frigate.internal:8554?token=secret",
+    " rtsp://frigate.internal:8554",
+  ]) {
+    assert.throws(() => loadConfig({ ...base, GO2RTC_RTSP_BASE: endpoint }), /GO2RTC_RTSP_BASE/);
+  }
+});

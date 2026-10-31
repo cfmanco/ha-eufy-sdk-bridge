@@ -15,7 +15,7 @@ import { writeGo2rtcConfig } from "../go2rtc-config.mjs";
  * Best-effort; never throws.
  */
 async function logCameraChannelMap(eufy, cams) {
-  const camSns = new Set(cams); // writeGo2rtcConfig returns serial strings, not device objects
+  const camSns = new Set(cams); // Camera serial strings, not device objects
   const rows = (await eufy.getDevices())
     .filter((d) => camSns.has(d.sn))
     .map((d) => {
@@ -112,7 +112,11 @@ export function createBoot(ctx) {
       // a `stream`, NOT deviceClass==="camera" (the SDK downgrades a camera behind a HomeBase to "other"),
       // so go2rtc registers exactly the cameras HA shows.
       const summaries = await ctx.deviceList();
-      const cams = await writeGo2rtcConfig(cfg, summaries);
+      const cams = summaries.filter((device) => Boolean(device.stream)).map((device) => device.sn);
+      // External go2rtc also needs the generated file when this bridge does not spawn it.
+      if (cfg.go2rtcEnable || cfg.rtspAvailable) {
+        await writeGo2rtcConfig(cfg, summaries);
+      }
       startGo2rtc();
       flags.ready = true;
       timers.watchdog ??= setInterval(() => void ctx.watchdogTick(), 2 * 60_000);

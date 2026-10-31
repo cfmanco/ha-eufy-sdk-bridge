@@ -237,7 +237,7 @@ export function createWsServer(ctx, httpServer) {
           return reply({
             path: `/stream/${msg.sn}`,
             http: `${process.env.BRIDGE_TLS_CERT_FILE ? "https" : "http"}://${cfg.selfHost}:${cfg.port}/stream/${msg.sn}`,
-            rtsp: `rtsp://${cfg.selfHost}:8554/${msg.sn}`,
+            ...(cfg.rtspAvailable ? { rtsp: `${cfg.rtspBase}/${msg.sn}` } : {}),
           });
         case "stream.stop":
           return reply({}); // advisory; the media connection is the real signal

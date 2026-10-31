@@ -2,9 +2,9 @@
 # No upstream/prebuilt bridge image is trusted for this fork.
 FROM node:24-alpine
 
-ARG BUILD_VERSION=0.2.0
+ARG BUILD_VERSION=0.2.1
 ARG BUILD_ARCH=aarch64
-ARG BRIDGE_REV=415fb6a2c0cbc1fbf0978225a98111298baa24ec
+ARG BRIDGE_REV=3354698b21cb415ca5f01771051a60111e7d9c8f
 
 RUN apk add --no-cache ca-certificates curl jq su-exec ffmpeg openssl
 WORKDIR /app

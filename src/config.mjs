@@ -6,6 +6,32 @@ import { parseLocalAddresses } from "./local-addresses.mjs";
 export const SCHEMA_VERSION = 2; // bump on any breaking protocol change so an old frontend fails loudly
 
 const truthy = (v) => /^(1|true|yes|on)$/i.test(String(v ?? ""));
+
+/** Advertise one operator-configured RTSP endpoint; never embed credentials. */
+function parseRtspBase(raw) {
+  if (raw == null || raw === "") return undefined;
+  if (typeof raw !== "string" || raw.trim() !== raw) {
+    throw new Error("GO2RTC_RTSP_BASE must be a plain rtsp://host:port endpoint");
+  }
+  let parsed;
+  try {
+    parsed = new URL(raw);
+  } catch {
+    throw new Error("GO2RTC_RTSP_BASE must be a valid rtsp://host:port endpoint");
+  }
+  if (
+    parsed.protocol !== "rtsp:" ||
+    !parsed.hostname ||
+    parsed.username ||
+    parsed.password ||
+    (parsed.pathname !== "" && parsed.pathname !== "/") ||
+    parsed.search ||
+    parsed.hash
+  ) {
+    throw new Error("GO2RTC_RTSP_BASE must be a credential-free rtsp://host:port endpoint");
+  }
+  return parsed.href.replace(/\/$/, "");
+}
 /** A positive whole number from an env value, else undefined (so the caller's default applies). */
 const positiveInt = (v) => {
   const n = Number(v);
@@ -83,6 +109,10 @@ export function loadConfig(env = process.env) {
     // instead of the one bundled here. Default ON to match existing behavior; set GO2RTC_ENABLE=0 to skip
     // spawning it.
     go2rtcEnable: env.GO2RTC_ENABLE == null ? true : truthy(env.GO2RTC_ENABLE),
+    // Separate converter capability from whether THIS process spawns go2rtc.
+    // Default true preserves external go2rtc/Frigate deployments that use GO2RTC_ENABLE=0.
+    // Set GO2RTC_RTSP_AVAILABLE=0 only when no RTSP converter exists (e.g. the Supervisor app).
+    rtspAvailable: env.GO2RTC_RTSP_AVAILABLE == null ? true : truthy(env.GO2RTC_RTSP_AVAILABLE),
     selfHost: env.BRIDGE_SELF_HOST || "127.0.0.1",
     // Cloud poll interval (ms). Unset → the SDK default (600000 = 10 min). Changeable live via the
     // config.set WS command. 0 disables polling.
@@ -150,6 +180,8 @@ export function loadConfig(env = process.env) {
           }
         : undefined,
   };
+  // Optional external Frigate/go2rtc address; default retains the legacy RTSP location.
+  cfg.rtspBase = parseRtspBase(env.GO2RTC_RTSP_BASE) ?? `rtsp://${cfg.selfHost}:8554`;
   // Where the FCM push registration (token + seen-ids) is persisted, beside the session file. Without a
   // pushStore the SDK falls back to MemoryFcmStore and re-registers a fresh token on every restart —
   // wasted work, and it's what makes a same-identity collision bite rather than self-correct (issue #30).

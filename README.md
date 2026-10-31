@@ -4,8 +4,8 @@
 > The original 25 October two-host security pilot established authenticated control,
 > doorbell events and snapshots. This branch additionally implements isolated live
 > media and HomeKit return audio, but Apple Home hardware acceptance is outstanding.
-> The new Home Assistant Green app is host-loopback only; the historical Pi deployment
-> remains available over verified HTTPS/WSS.
+> The Home Assistant Green app uses the internal Supervisor Docker network with no published host ports;
+> the historical Pi deployment remains available over verified HTTPS/WSS.
 >
 > For the tested two-host setup, requirements, checks and remaining release gates, use the
 > [hardened deployment runbook](docs/security-deployment.md). The [architecture](docs/security-architecture.md)
@@ -38,14 +38,36 @@ drift out of sync.
 
 This fork now includes a Supervisor-managed app at
 [`eufy_sdk_bridge/`](./eufy_sdk_bridge). It builds the pinned forked bridge,
-runs on aarch64 Home Assistant Green, serves pinned TLS 1.3 on the **private Supervisor Docker network** with
-no published host ports and disables bundled go2rtc. The matching
-`cfmanco/ha-eufy-sdk` integration can use the same host-loopback transport.
+runs on aarch64 Home Assistant Green, serves TLS 1.3 on the **internal Supervisor Docker network**
+with no published host ports and disables bundled go2rtc. The matching
+`cfmanco/ha-eufy-sdk` integration must connect to the **Supervisor internal hostname**
+shown in the app logs, using the app port, bridge bearer token and pinned TLS
+certificate SHA256 fingerprint. `127.0.0.1` in Home Assistant Core refers to Core,
+not the app container.
 
-Install from this repository's `feat/local-p2p-live-view` branch; see the
-[installation and rollback instructions](./eufy_sdk_bridge/DOCS.md). This
-does **not** deploy to Green automatically, remove the Raspberry Pi
+The corrected app is included in the main branch; this PR updates its streaming lifecycle and pinned source.
+See the [installation and rollback instructions](./eufy_sdk_bridge/DOCS.md).
+This does **not** deploy to Green automatically, remove the Raspberry Pi
 installation or claim real-world HomeKit talkback verification.
+
+## Separate go2rtc / Frigate converter
+
+`GO2RTC_ENABLE=0` stops **only** the bundled go2rtc process. It does not disable
+RTSP discovery for an independently running converter. By default, `stream.start`
+continues to advertise RTSP as before, and the bridge still generates go2rtc
+configuration for external users.
+
+Set `GO2RTC_RTSP_BASE=rtsp://frigate.internal:8558` to advertise an external
+converter's actual hostname and RTSP port (replace these example values with
+your own). The advertised stream name is the camera serial. Use
+`GO2RTC_RTSP_AVAILABLE=0` only if no RTSP converter is offered; the isolated
+Home Assistant Green app sets this explicitly.
+
+An RTSP URL alone does not configure the external converter or authorise it
+to pull `/stream`. The bridge requires a bearer token for the raw media
+endpoint, and the older generated go2rtc input source still needs a
+security-reviewed authentication mechanism. Do not put the bearer token in
+URLs or disable bridge authentication to work around that issue.
 
 ## Run it
 

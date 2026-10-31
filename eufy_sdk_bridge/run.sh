@@ -69,6 +69,9 @@ export BRIDGE_APP_DIR=/app
 export EUFY_SESSION="$PRIVATE/.eufy-session.json"
 export GO2RTC_CONFIG="$PRIVATE/go2rtc.yaml"
 export GO2RTC_ENABLE=0
+# The Supervisor app runs no bundled or external RTSP converter.
+# This does NOT alter GO2RTC_ENABLE=0 for separate Frigate/go2rtc deployments.
+export GO2RTC_RTSP_AVAILABLE=0
 export EUFY_POLL_MS="$(jq -r '.poll_ms // 600000' "$OPTIONS")"
 export STREAM_IDLE_MS="$(jq -r '.stream_idle_ms // 0' "$OPTIONS")"
 export STREAM_FAIL_BACKOFF_MS="$(jq -r '.stream_fail_backoff_ms // 30000' "$OPTIONS")"
