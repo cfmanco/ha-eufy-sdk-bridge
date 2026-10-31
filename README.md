@@ -33,6 +33,19 @@ Video is deliberately **not** on the WebSocket: the WS hands back a URL, and _co
 is what starts the camera — disconnecting is what stops it_. There is no "stream is running" flag to
 drift out of sync.
 
+## Home Assistant Green — hardened local app (feature preview)
+
+This fork now includes a Supervisor-managed app at
+[`eufy_sdk_bridge/`](./eufy_sdk_bridge). It builds the pinned forked bridge,
+runs on aarch64 Home Assistant Green, binds its authenticated control and
+media transport to **127.0.0.1** and disables bundled go2rtc. The matching
+`cfmanco/ha-eufy-sdk` integration can use the same host-loopback transport.
+
+Install from this repository's `feat/local-p2p-live-view` branch; see the
+[installation and rollback instructions](./eufy_sdk_bridge/DOCS.md). This
+does **not** deploy to Green automatically, remove the Raspberry Pi
+installation or claim real-world HomeKit talkback verification.
+
 ## Run it
 
 Pull the published image and run it (bundles the SDK + go2rtc):
