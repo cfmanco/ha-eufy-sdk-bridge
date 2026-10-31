@@ -112,7 +112,9 @@ function loginFailureHint(e) {
 async function main() {
   // Serve FIRST — the WS must be reachable so a client can drive 2FA/captcha before we're authed.
   httpServer.listen(cfg.port, cfg.host, () =>
-    console.log(`[bridge] ${process.env.BRIDGE_TLS_CERT_FILE ? "HTTPS/WSS" : "HTTP/WS"} listening on ${cfg.host}:${cfg.port}`),
+    console.log(
+      `[bridge] ${process.env.BRIDGE_TLS_CERT_FILE ? "HTTPS/WSS" : "HTTP/WS"} listening on ${cfg.host}:${cfg.port}`,
+    ),
   );
   try {
     await ctx.applyLogin(await eufy.login());
