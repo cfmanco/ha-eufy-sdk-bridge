@@ -1,0 +1,14 @@
+.git
+**/.git
+**/.env
+**/.env.*
+**/*.key
+**/*.pem
+**/*.p12
+**/*.pfx
+**/.eufy-session.json
+**/.eufy-fcm.json
+**/.solix-session.json
+**/.npmrc
+node_modules
+private
