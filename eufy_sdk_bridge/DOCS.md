@@ -1,4 +1,4 @@
-# Eufy SDK Bridge — isolated Home Assistant app (v0.2.0)
+# Eufy SDK Bridge — isolated Home Assistant app (v0.2.1)
 
 **Feature preview:** Apple Home microphone audio is not yet verified on the physical Eufy doorbell. Installing this app does not replace the HomeKit Bridge.
 
@@ -17,7 +17,7 @@ The score is a configuration rating, not a security audit or proof of protection
 ## Install (leave the app stopped at first)
 
 1. Add the repository `https://github.com/cfmanco/ha-eufy-sdk-bridge` under **Settings → Apps → App store → Repositories** after this feature is merged and the repository is refreshed.
-2. Install **Eufy SDK Bridge (isolated preview)**, version 0.2.0 or newer, but leave it stopped. Configure the Eufy account and a random, private 64-character lowercase hexadecimal `bridge_token`. Copying the existing Pi bridge token is permitted, but do not place it in a public issue, chat, or source file.
+2. Install **Eufy SDK Bridge (isolated preview)**, version 0.2.1 or newer, but leave it stopped. Configure the Eufy account and a random, private 64-character lowercase hexadecimal `bridge_token`. Copying the existing Pi bridge token is permitted, but do not place it in a public issue, chat, or source file.
 3. Back up Home Assistant's configuration and independently preserve the Pi bridge's session files. Keep the Pi deployment available for rollback.
 
 ## Cutover when ready
@@ -30,6 +30,6 @@ The score is a configuration rating, not a security audit or proof of protection
 
 ## Rebuilds and rotation
 
-The image fetches pinned fork source at `415fb6a2c0cbc1fbf0978225a98111298baa24ec` and installs locked dependencies. A new app release should update this pin deliberately. Do not delete the app's private TLS key or certificate: replacing them changes the fingerprint and interrupts connection until the integration pin is updated. TLS certificates are initially valid for five years and require planned renewal before expiry.
+The image fetches pinned fork source at `3354698b21cb415ca5f01771051a60111e7d9c8f` and installs locked dependencies. A new app release should update this pin deliberately. Do not delete the app's private TLS key or certificate: replacing them changes the fingerprint and interrupts connection until the integration pin is updated. TLS certificates are initially valid for five years and require planned renewal before expiry.
 
 The isolated app has not been built on the physical Green. Eufy's P2P behaviour behind the Supervisor Docker bridge is unverified; UDP connectivity to the HomeBase must be validated before retiring the Pi.
