@@ -236,7 +236,7 @@ export function createWsServer(ctx, httpServer) {
           // Returns URLs; does NOT open the camera — the media connection does that.
           return reply({
             path: `/stream/${msg.sn}`,
-            http: `http://${cfg.selfHost}:${cfg.port}/stream/${msg.sn}`,
+            http: `${process.env.BRIDGE_TLS_CERT_FILE ? "https" : "http"}://${cfg.selfHost}:${cfg.port}/stream/${msg.sn}`,
             rtsp: `rtsp://${cfg.selfHost}:8554/${msg.sn}`,
           });
         case "stream.stop":

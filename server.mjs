@@ -11,8 +11,8 @@
 // and the HTTP + WS servers. A single `ctx` object carries config + client + state + each module's
 // public functions; modules read their cross-module dependencies off `ctx` at call time, so wiring
 // order here does not matter as long as `ctx` is whole before login begins.
-import http from "node:http";
 import fs from "node:fs";
+import { createBridgeServer } from "./src/server-transport.mjs";
 import { loadConfig } from "./src/config.mjs";
 import { checkWebRtcLibrary } from "./src/webrtc-check.mjs";
 import { installConsoleRedaction } from "./src/redact.mjs";
@@ -74,7 +74,7 @@ Object.assign(
   createClips(ctx),
 );
 
-const httpServer = http.createServer(createHttpHandler(ctx));
+const httpServer = createBridgeServer(createHttpHandler(ctx));
 Object.assign(ctx, createWsServer(ctx, httpServer)); // adds send / broadcast / handleMessage
 
 // ── SDK event wiring ──────────────────────────────────────────────────────────────────────────────────
@@ -111,7 +111,11 @@ function loginFailureHint(e) {
 // ── boot ───────────────────────────────────────────────────────────────────────────────────────────
 async function main() {
   // Serve FIRST — the WS must be reachable so a client can drive 2FA/captcha before we're authed.
-  httpServer.listen(cfg.port, cfg.host, () => console.log(`[bridge] listening on ${cfg.host}:${cfg.port}`));
+  httpServer.listen(cfg.port, cfg.host, () =>
+    console.log(
+      `[bridge] ${process.env.BRIDGE_TLS_CERT_FILE ? "HTTPS/WSS" : "HTTP/WS"} listening on ${cfg.host}:${cfg.port}`,
+    ),
+  );
   try {
     await ctx.applyLogin(await eufy.login());
   } catch (e) {
